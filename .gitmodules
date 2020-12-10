@@ -1,0 +1,9 @@
+[submodule "include/ethereumapis"]
+	path = include/ethereumapis
+	url = https://github.com/prysmaticlabs/ethereumapis.git
+[submodule "include/googleapis"]
+	path = include/googleapis
+	url = https://github.com/google/googleapis.git
+[submodule "include/gogo/github.com/gogo/protobuf"]
+	path = include/gogo/github.com/gogo/protobuf
+	url = https://github.com/gogo/protobuf.git

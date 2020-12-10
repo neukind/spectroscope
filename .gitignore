@@ -1,0 +1,13 @@
+/eth
+/github
+/google
+/venv
+/.vscode
+__pycache__
+
+/config.ini
+/pubkeys
+
+#include/ethereumapis
+#include/gogo/github.com/gogo/protobuf
+#include/googleapis
