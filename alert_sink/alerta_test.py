@@ -64,7 +64,3 @@ class AlertaTest(unittest.TestCase):
             text="{}{}".format(alerta.BEACON_CHAIN_URL, self.VALIDATOR_INDEX),
             attributes={"pubkey": self.VALIDATOR_PUBLIC_KEY.hex()},
         )
-
-
-if __name__ == "__main__":
-    unittest.main()
