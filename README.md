@@ -3,7 +3,7 @@
 [![Unit tests](https://github.com/neukind/ethmonitor/workflows/test/badge.svg?branch=main)](https://github.com/neukind/ethmonitor/actions?query=workflow%3Atest)
 [![codecov](https://codecov.io/gh/neukind/ethmonitor/branch/main/graph/badge.svg?token=XC5H183B2G)](https://codecov.io/gh/neukind/ethmonitor)
 [![ETH2.0 Spec Version](https://img.shields.io/badge/ETH2.0%20Spec%20Version-v1.0.0-blue.svg)](https://github.com/ethereum/eth2.0-specs/tree/v1.0.0)
-[![MIT](https://img.shields.io/github/license/neukind/ethmonitor)](https://github.com/neukind/ethmonitor/blob/main/LICENSE)
+[![Apache License 2.0](https://img.shields.io/github/license/neukind/ethmonitor)](https://github.com/neukind/ethmonitor/blob/main/LICENSE)
 [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-v2.0%20adopted-ff69b4.svg)](CODE_OF_CONDUCT.md)
 [![Discord](https://img.shields.io/discord/737753271380475965)](https://discord.gg/6vYf9Z4Zuf)
 
