@@ -23,14 +23,18 @@ Ethmonitor is a monitoring agent for [Ethereum 2.0](https://ethereum.org/en/eth2
 
 ### Using `virtualenv`
 
-```
+```bash
 git clone https://github.com/neukind/ethmonitor.git
 cd ethmonitor
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
 ./build_proto_libs.sh
-python client.py --config config.ini --pubkeys pubkeys.txt
+
+cp config.ini.example config.ini
+vim config.ini  # edit settings
+
+python client.py --config config.ini
 ```
 
 ### Using Docker

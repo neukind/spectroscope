@@ -2,6 +2,7 @@ import argparse
 import grpc
 import importlib
 import logging
+import json
 import os
 import sys
 
@@ -99,26 +100,30 @@ if __name__ == "__main__":
     logging.basicConfig()
 
     parser = argparse.ArgumentParser(description="Ethereum 2.0 monitoring client.")
-    parser.add_argument("--pubkeys", help="file containing public keys", required=True)
-    parser.add_argument("--config", help="config file", default="config.ini")
+    parser.add_argument(
+        "--config", help="config file", default="config.ini", required=True
+    )
     args = parser.parse_args()
-    validator_set = [line.rstrip("\n") for line in open(args.pubkeys)]
 
     alert_module = None
     config = ConfigParser()
     with open(args.config, "r") as config_file:
         config.read_file(config_file)
-        alert_sink_class = config.get("alert", "sink", raw=True, fallback="alerta")
+
+        validator_set = json.loads(config.get("monitor", "pubkeys", raw=True))
+        alert_sink_class = config.get(
+            "alert_sink", "plugin", raw=True, fallback="alerta"
+        )
         try:
             alert_module = importlib.import_module(
                 "alert_sink.{}".format(alert_sink_class)
             )
         except ImportError:
             logging.error("Couldn't import alert class {}".format(alert_sink_class))
-    api_key = config.get("alert", "api_key", raw=True)
+    api_key = config.get("alert_sink", "api_key", raw=True)
     alerter = alert_module.Alerter(api_key)
 
-    grpc_endpoint = config.get("rpc", "endpoint", raw=True)
+    grpc_endpoint = config.get("eth2", "rpc_endpoint", raw=True)
     with grpc.insecure_channel(grpc_endpoint) as channel:
         stub = beacon_chain_pb2_grpc.BeaconChainStub(channel)
         bw = BalanceWatcher(stub, alerter, validator_set)

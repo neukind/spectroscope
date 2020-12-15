@@ -1,0 +1,12 @@
+[alert_sink]
+plugin = alerta
+api_key = xxx
+
+[eth2]
+rpc_endpoint = eth2.api
+
+[monitor]
+pubkeys = [
+    "your-validator-node",
+    "your-second-validator-node"
+    ]
