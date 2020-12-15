@@ -26,6 +26,7 @@ Ethmonitor is a monitoring agent for [Ethereum 2.0](https://ethereum.org/en/eth2
 ```bash
 git clone https://github.com/neukind/ethmonitor.git
 cd ethmonitor
+git submodule update --init
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
