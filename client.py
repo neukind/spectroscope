@@ -35,7 +35,6 @@ class BalanceWatcher:
     def stream_validators(self):
         responses = self.stub.StreamValidatorsInfo(self._generate_messages())
         for response in responses:
-            print(response)
             if response.public_key in self.validator_data:
                 if (
                     self.validator_data[response.public_key]["status"]

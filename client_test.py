@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import Mock, call
 
-from eth.v1alpha1 import beacon_chain_pb2, validator_pb2
+from ethereumapis.v1alpha1 import beacon_chain_pb2, validator_pb2
 from client import BalanceWatcher
 
 
