@@ -8,7 +8,7 @@ import sys
 
 from alert_sink.alert_sink import AlertSink
 from configparser import ConfigParser
-from eth.v1alpha1 import beacon_chain_pb2, beacon_chain_pb2_grpc
+from ethereumapis.v1alpha1 import beacon_chain_pb2, beacon_chain_pb2_grpc
 from typing import List
 
 
@@ -35,6 +35,7 @@ class BalanceWatcher:
     def stream_validators(self):
         responses = self.stub.StreamValidatorsInfo(self._generate_messages())
         for response in responses:
+            print(response)
             if response.public_key in self.validator_data:
                 if (
                     self.validator_data[response.public_key]["status"]

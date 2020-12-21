@@ -1,7 +1,3 @@
-/eth
-/github
-/google
-/venv
 /.vscode
 __pycache__
 *.pyc

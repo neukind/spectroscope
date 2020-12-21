@@ -5,7 +5,7 @@
 [![ETH2.0 Spec Version](https://img.shields.io/badge/ETH2.0%20Spec%20Version-v1.0.0-blue.svg)](https://github.com/ethereum/eth2.0-specs/tree/v1.0.0)
 [![Apache License 2.0](https://img.shields.io/github/license/neukind/spectroscope)](https://github.com/neukind/spectroscope/blob/main/LICENSE)
 [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-v2.0%20adopted-ff69b4.svg)](CODE_OF_CONDUCT.md)
-[![Discord](https://img.shields.io/discord/737753271380475965)](https://discord.gg/6vYf9Z4Zuf)
+[![Discord](https://img.shields.io/discord/737753271380475965)](https://discord.gg/x8TDzpPHcK)
 
 **Disclaimer: Spectroscope is still in beta. You can start using Spectroscope to monitor your Ethereum 2.0 nodes today, but some features may be incomplete and libraries/APIs are subject to change.**
 
@@ -26,11 +26,9 @@ Spectroscope is a monitoring agent for [Ethereum 2.0](https://ethereum.org/en/et
 ```bash
 git clone https://github.com/neukind/spectroscope.git
 cd spectroscope
-git submodule update --init
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
-./build_proto_libs.sh
 
 cp config.ini.example config.ini
 vim config.ini  # edit settings
@@ -48,4 +46,4 @@ Contributions are always welcome in the form of [pull requests](https://github.c
 
 ## Contact
 
-Spectroscope is brought to you by [Neukind](https://www.neukind.com/). Discussion is welcome on our [Discord server](https://discord.gg/6vYf9Z4Zuf).
+Spectroscope is brought to you by [Neukind](https://www.neukind.com/). Discussion is welcome on our [Discord server](https://discord.gg/x8TDzpPHcK).
