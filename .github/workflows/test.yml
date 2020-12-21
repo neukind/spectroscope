@@ -23,8 +23,6 @@ jobs:
             ${{ runner.os }}-pip-
       - name: Install dependencies
         run: pip install -r requirements.txt
-      - name: Generate protobuf libraries
-        run: ./build_proto_libs.sh
       - name: Run unit tests
         run: coverage run -m unittest discover -p "*_test.py"
       - uses: codecov/codecov-action@v1
