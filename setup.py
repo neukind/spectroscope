@@ -12,6 +12,7 @@ setuptools.setup(
         "pydantic>=1.7.3",
         "toml>=0.10.2",
     ],
+    python_requires=">=3.6",
     entry_points={
         "console_scripts": ["spectroscope = spectroscope.app:cli"],
         "spectroscope.module": [
