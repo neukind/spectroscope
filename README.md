@@ -32,6 +32,8 @@ python3 -m venv venv
 source venv/bin/activate
 
 python setup.py install
+spectroscope init  # installs a fresh config to config.toml
+vim config.toml    # modify your config as necessary
 spectroscope --config config.toml
 ```
 
