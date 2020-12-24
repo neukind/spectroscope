@@ -8,8 +8,8 @@ class Module(abc.ABC):
     def consumed_types(self) -> List[Type[BaseModel]]:
         return self._consumed_types
 
-    @abc.abstractmethod
-    def register(self, **kwargs):
+    @abc.abstractclassmethod
+    def register(cls, **kwargs):
         pass
 
     @abc.abstractmethod

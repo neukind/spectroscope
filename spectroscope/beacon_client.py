@@ -1,3 +1,6 @@
+import logging
+import spectroscope
+
 from ethereumapis.v1alpha1 import beacon_chain_pb2, beacon_chain_pb2_grpc
 from spectroscope.model.base import ChainTimestamp, ValidatorIdentity
 from spectroscope.model.update import (
@@ -11,6 +14,9 @@ from spectroscope.module.subscriber import Subscriber
 from typing import List, Set, Tuple, Type
 
 
+log = spectroscope.log()
+
+
 class BeaconChainStreamer:
     def __init__(
         self,
@@ -18,15 +24,15 @@ class BeaconChainStreamer:
         modules: List[Tuple[Type[Module], dict]],
     ):
         self.stub = stub
-        self.subscribers = list()
-        self.plugins = list()
         self.validator_set = set()
 
+        self.subscribers = list()
+        self.plugins = list()
         for module, config in modules:
             if issubclass(module, Subscriber):
-                self.subscribers.append(module().register(**config))
+                self.subscribers.append(module.register(**config))
             elif issubclass(module, BasePlugin):
-                self.plugins.append(module().register(**config))
+                self.plugins.append(module.register(**config))
             else:
                 raise TypeError
 
@@ -38,15 +44,8 @@ class BeaconChainStreamer:
         for validator in validators:
             self.validator_set.remove(validator)
 
-    def register_subscriber(self, subscriber: Subscriber):
-        subscriber.register()
-        self.subscribers.append(subscriber)
-
-    def register_plugin(self, plugin: BasePlugin):
-        plugin.register()
-        self.plugins.append(plugin)
-
     def _generate_messages(self):
+        log.info("Watching for {} validators".format(len(self.validator_set)))
         yield beacon_chain_pb2.ValidatorChangeSet(
             action=beacon_chain_pb2.SET_VALIDATOR_KEYS,
             public_keys=self.validator_set,
@@ -54,6 +53,9 @@ class BeaconChainStreamer:
 
     def stream_responses(self, stream):
         for validator_info in stream:
+            log.info(
+                "Received update for validator idx {}".format(validator_info.index)
+            )
             updates = [
                 ValidatorStatusUpdate(status=validator_info.status),
                 ValidatorBalanceUpdate(

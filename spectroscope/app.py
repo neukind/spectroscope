@@ -1,21 +1,17 @@
-import os
-import sys
-import logging
-
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)))
-
 import click
-from ethereumapis.v1alpha1 import beacon_chain_pb2_grpc
 import grpc
 import importlib
-from spectroscope.beacon_client import BeaconChainStreamer
+import sys
+import spectroscope
 import toml
+
+from ethereumapis.v1alpha1 import beacon_chain_pb2_grpc
+from spectroscope.beacon_client import BeaconChainStreamer
 
 SYSTEM_MODULES = ["spectroscope"]
 
 
-log = logging.getLogger("spectroscope")
-logging.basicConfig(level=logging.DEBUG)
+log = spectroscope.log()
 
 
 @click.command()
@@ -40,16 +36,26 @@ def cli(config_file: str):
     log.info("Found {} unique validator keys to watch".format(len(validator_set)))
 
     modules = list()
-    for module, config in config_root.items():
-        if module not in SYSTEM_MODULES and config.get("enabled", False):
-            try:
-                log.info("Loading module {} with {} args".format(module, len(config)))
-                m = importlib.import_module("spectroscope.module", module)
-            except ImportError:
-                log.error("Couldn't import module {}".format(alert_sink_class))
-            modules.append(tuple(m.SPECTROSCOPE_MODULE, config))
+    for top_level, module_type in config_root.items():
+        if top_level not in SYSTEM_MODULES:
+            for module, config in module_type.items():
+                if config.get("enabled", False):
+                    try:
+                        log.info(
+                            "Loading module {}.{} with {} args".format(
+                                top_level, module, len(config)
+                            )
+                        )
+                        m = importlib.import_module(
+                            "spectroscope.module.{}.{}".format(top_level, module)
+                        )
+                    except ImportError:
+                        log.error("Couldn't import module {}".format(module))
+                        sys.exit(1)
+                    modules.append((m.SPECTROSCOPE_MODULE, config))
     log.info("Loaded {} modules".format(len(modules)))
 
+    log.info("Opening gRPC channel")
     with grpc.insecure_channel(grpc_endpoint) as channel:
         stub = beacon_chain_pb2_grpc.BeaconChainStub(channel)
         bw = BeaconChainStreamer(stub, modules)

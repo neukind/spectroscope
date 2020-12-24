@@ -1,7 +1,7 @@
 from spectroscope.model.alert import Alert, Action, RaiseAlert, ClearAlert
 from spectroscope.model.base import ValidatorIdentity
 from spectroscope.model.update import UpdateBatch, ValidatorBalanceUpdate
-from spectroscope.subscriber import Subscriber
+from spectroscope.module.subscriber import Subscriber
 from typing import List
 
 
@@ -13,11 +13,17 @@ class BalancePenalty(Alert):
 class BalanceAlert(Subscriber):
     _consumed_types = [ValidatorBalanceUpdate]
 
-    def register(self, **kwargs):
+    def __init__(self, penalty_tolerance: int):
         self._highest_balances = dict()
         self._alerting_validators = set()
         self._most_recent_epoch = -1
-        self._penalty_tolerance = kwargs.get("penalty_tolerance", 0)
+        self._penalty_tolerance = penalty_tolerance
+
+    @classmethod
+    def register(cls, **kwargs):
+        return cls(
+            penalty_tolerance=kwargs.get("penalty_tolerance", 0),
+        )
 
     def consume(self, batch: UpdateBatch) -> List[Action]:
         ret = list()

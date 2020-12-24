@@ -2,7 +2,7 @@ from spectroscope.model.alert import Alert, Action, RaiseAlert
 from spectroscope.model.base import ValidatorIdentity
 from spectroscope.model.notification import Notification, Notify
 from spectroscope.model.update import UpdateBatch, ValidatorStatusUpdate
-from spectroscope.subscriber import Subscriber
+from spectroscope.module.subscriber import Subscriber
 from typing import List
 
 
@@ -14,11 +14,18 @@ class StatusChange(Alert, Notification):
 class StatusAlert(Subscriber):
     _consumed_types = [ValidatorStatusUpdate]
 
-    def register(self, **kwargs):
+    def __init__(self, notify_when_enter: List[int], alert_when_exit: List[int]):
         self._statuses = dict()
         self._most_recent_epoch = -1
-        self._notify_when_enter = kwargs.get("notify_when_enter", [1])
-        self._alert_when_exit = kwargs.get("alert_when_exit", [2, 3])
+        self._notify_when_enter = notify_when_enter
+        self._alert_when_exit = alert_when_exit
+
+    @classmethod
+    def register(cls, **kwargs):
+        return cls(
+            notify_when_enter=kwargs.get("notify_when_enter", [1]),
+            alert_when_exit=kwargs.get("alert_when_exit", [2, 3]),
+        )
 
     def consume(self, batch: UpdateBatch) -> List[Action]:
         ret = list()
@@ -47,3 +54,6 @@ class StatusAlert(Subscriber):
                 self._statuses[pk] = update.status
 
         return ret
+
+
+SPECTROSCOPE_MODULE = StatusAlert
