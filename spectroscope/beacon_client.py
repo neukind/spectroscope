@@ -1,4 +1,3 @@
-import logging
 import spectroscope
 
 from ethereumapis.v1alpha1 import beacon_chain_pb2, beacon_chain_pb2_grpc

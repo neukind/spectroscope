@@ -9,20 +9,9 @@ jobs:
           submodules: true
       - uses: actions/setup-python@v2
         with:
-          python-version: 3.8
-      - name: Get pip cache dir
-        id: pip-cache
-        run: |
-          echo "::set-output name=dir::$(pip cache dir)"
-      - name: pip cache
-        uses: actions/cache@v2
-        with:
-          path: ${{ steps.pip-cache.outputs.dir }}
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-      - name: Install dependencies
-        run: pip install -r requirements.txt
+          python-version: 3.9
+      - name: Install tox
+        run: pip install tox
       - name: Run unit tests
-        run: coverage run -m unittest discover -p "*_test.py"
+        run: tox
       - uses: codecov/codecov-action@v1
