@@ -13,8 +13,8 @@ jobs:
       - uses: actions/setup-python@v2
         with:
           python-version: 3.9
-      - name: Install tox
-        run: pip install tox
+      - name: Install testing utilities
+        run: pip install coverage tox
       - name: Run unit tests
         run: tox
       - uses: codecov/codecov-action@v1
