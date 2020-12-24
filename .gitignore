@@ -1,8 +1,13 @@
+# editor-specific config
 /.vscode
-__pycache__
-*.pyc
 
+# config that should not be checked in
 /config.toml
-/spectroscope.egg-info/
+
+# compiled python output
+__pycache__
+
+# build artifacts
 /.coverage
 /.tox
+/spectroscope.egg-info
