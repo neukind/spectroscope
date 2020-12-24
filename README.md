@@ -21,24 +21,23 @@ Spectroscope is a monitoring agent for [Ethereum 2.0](https://ethereum.org/en/et
 
 ## Installing
 
-### Using `virtualenv`
+### With setuptools
 
 ```bash
 git clone https://github.com/neukind/spectroscope.git
 cd spectroscope
+
+# optional: create a virtualenv to install into
 python3 -m venv venv
 source venv/bin/activate
-pip install -r requirements.txt
 
-cp config.ini.example config.ini
-vim config.ini  # edit settings
-
-python client.py --config config.ini
+python setup.py install
+spectroscope --config config.toml
 ```
 
-### Using Docker
+### With Docker
 
-TBD
+TODO
 
 ## Contributing
 
