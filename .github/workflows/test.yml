@@ -18,3 +18,5 @@ jobs:
       - name: Run unit tests
         run: tox
       - uses: codecov/codecov-action@v1
+        with:
+          fail_ci_if_error: true
