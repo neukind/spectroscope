@@ -1,7 +1,6 @@
 import abc
 from pydantic import BaseModel
-from spectroscope.model.base import Action
-from spectroscope.model.update import BaseUpdate
+from spectroscope.model.base import Event
 from typing import Any, List, Optional, Type
 
 ENABLED_BY_DEFAULT = ["balance_alert", "status_alert"]
@@ -16,28 +15,30 @@ class ConfigOption(BaseModel):
 
 
 class Module(abc.ABC):
+    _consumed_types: List[Type[Event]]
+
     @property
-    def consumed_types(self) -> List[Type[BaseModel]]:
+    def consumed_types(self) -> List[Type[Event]]:
         return self._consumed_types
 
-    config_options = []
+    config_options: List[ConfigOption] = []
 
     @abc.abstractclassmethod
     def register(cls, **kwargs):
         pass
 
     @abc.abstractmethod
-    def consume(self, updates: List[BaseModel]):
+    def consume(self, updates: List[Event]):
         pass
 
 
 class Plugin(Module):
     @abc.abstractmethod
-    def consume(self, updates: List[Action]):
+    def consume(self, updates: List[Event]):
         pass
 
 
 class Subscriber(Module):
     @abc.abstractmethod
-    def consume(self, updates: List[BaseUpdate]):
+    def consume(self, updates: List[Event]):
         pass

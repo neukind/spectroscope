@@ -1,15 +1,20 @@
 from datetime import datetime
 from pydantic import BaseModel
+from typing import Optional
 
 
-class Action:
+class Event(BaseModel):
+    pass
+
+
+class Action(Event):
     pass
 
 
 class ChainTimestamp(BaseModel):
     epoch: int
     slot: int
-    timestamp: datetime = None
+    timestamp: Optional[datetime] = None
 
 
 class ValidatorIdentity(BaseModel):

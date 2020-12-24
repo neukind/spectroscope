@@ -21,7 +21,7 @@ class BeaconChainStreamer:
         modules: List[Tuple[Type[Module], dict]],
     ):
         self.stub = stub
-        self.validator_set = set()
+        self.validator_set: Set[bytes] = set()
 
         self.subscribers = list()
         self.plugins = list()
@@ -76,7 +76,7 @@ class BeaconChainStreamer:
 
             for plugin in self.plugins:
                 plugin.consume(
-                    list(filter(lambda x: type(x) in sink.consumed_types, responses))
+                    list(filter(lambda x: type(x) in plugin.consumed_types, responses))
                 )
 
     def stream(self):

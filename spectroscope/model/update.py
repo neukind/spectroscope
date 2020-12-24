@@ -1,22 +1,22 @@
 from ethereumapis.v1alpha1.validator_pb2 import ValidatorStatus
 from pydantic import BaseModel
-from spectroscope.model.base import ChainTimestamp, ValidatorIdentity
+from spectroscope.model.base import Event, ChainTimestamp, ValidatorIdentity
 from typing import List
 
 
-class BaseUpdate(BaseModel):
+class Update(Event):
     pass
 
 
-class ValidatorStatusUpdate(BaseUpdate):
+class ValidatorStatusUpdate(Update):
     status: int
 
 
-class ValidatorBalanceUpdate(BaseUpdate):
+class ValidatorBalanceUpdate(Update):
     balance: int
 
 
 class UpdateBatch(BaseModel):
     validator: ValidatorIdentity
     timestamp: ChainTimestamp
-    updates: List[BaseUpdate]
+    updates: List[Update]

@@ -4,7 +4,7 @@ from typing import List, Optional
 from uuid import UUID
 
 
-class ValidatorMetricsUpdate(BaseModel):
+class ValidatorMetricsUpdate(Event):
     class ValidatorMetrics(BaseModel):
         uuid: UUID
         identity: ValidatorIdentity

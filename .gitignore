@@ -9,5 +9,6 @@ __pycache__
 
 # build artifacts
 /.coverage
+/.eggs
 /.tox
 /spectroscope.egg-info
