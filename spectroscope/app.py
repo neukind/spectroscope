@@ -1,29 +1,41 @@
 import click
 import grpc
 import importlib
+import os
 import sys
 import spectroscope
 import toml
 
+from click_default_group import DefaultGroup
 from ethereumapis.v1alpha1 import beacon_chain_pb2_grpc
 from spectroscope.beacon_client import BeaconChainStreamer
+from spectroscope.config import DefaultConfigBuilder
+from spectroscope.module import ConfigOption, ENABLED_BY_DEFAULT
 
 SYSTEM_MODULES = ["spectroscope"]
+DEFAULT_CONFIG_PATH = "config.toml"
 
 
 log = spectroscope.log()
 
 
-@click.command()
+@click.group(cls=DefaultGroup, default="run", default_if_no_args=True)
+def cli():
+    pass
+
+
+@cli.command()
 @click.option(
     "-c",
     "--config",
     "config_file",
     type=str,
-    default="config.toml",
+    default=DEFAULT_CONFIG_PATH,
     help="Config file path",
 )
-def cli(config_file: str):
+def run(config_file: str):
+    """Run the Spectroscope monitoring agent."""
+
     log.info("Spectroscope starting up")
 
     log.info("Loading configuration")
@@ -36,23 +48,15 @@ def cli(config_file: str):
     log.info("Found {} unique validator keys to watch".format(len(validator_set)))
 
     modules = list()
-    for top_level, module_type in config_root.items():
-        if top_level not in SYSTEM_MODULES:
-            for module, config in module_type.items():
-                if config.get("enabled", False):
-                    try:
-                        log.info(
-                            "Loading module {}.{} with {} args".format(
-                                top_level, module, len(config)
-                            )
-                        )
-                        m = importlib.import_module(
-                            "spectroscope.module.{}.{}".format(top_level, module)
-                        )
-                    except ImportError:
-                        log.error("Couldn't import module {}".format(module))
-                        sys.exit(1)
-                    modules.append((m.SPECTROSCOPE_MODULE, config))
+    for module, config in config_root.items():
+        if module not in SYSTEM_MODULES and config.get("enabled", False):
+            try:
+                log.info("Loading module {} with {} args".format(module, len(config)))
+                m = importlib.import_module("spectroscope.module.{}".format(module))
+            except ImportError:
+                log.error("Couldn't import module {}".format(module))
+                sys.exit(1)
+            modules.append((m.SPECTROSCOPE_MODULE, config))
     log.info("Loaded {} modules".format(len(modules)))
 
     log.info("Opening gRPC channel")
@@ -61,6 +65,47 @@ def cli(config_file: str):
         bw = BeaconChainStreamer(stub, modules)
         bw.add_validators(set(map(bytes.fromhex, validator_set)))
         bw.stream()
+
+
+@cli.command()
+@click.option(
+    "--force",
+    is_flag=True,
+    help="Force overwriting the destination file.",
+)
+@click.argument("destination_file", default=DEFAULT_CONFIG_PATH, type=click.File("w"))
+def init(destination_file: click.utils.LazyFile, force: bool):
+    """Initialize a config file into DESTINATION_FILE."""
+
+    dst_path = destination_file.name
+    if dst_path != "<stdout>" and os.path.exists(dst_path) and force != True:
+        raise click.ClickException(
+            "Can't overwrite {} without --force. Exiting.".format(dst_path)
+        )
+
+    config_data = DefaultConfigBuilder.build()
+    for module, configs in config_data.items():
+        destination_file.write("[{section}]\n".format(section=module))
+        if module not in SYSTEM_MODULES:
+            destination_file.write(
+                "enabled = {auto}\n".format(
+                    auto="true" if module in ENABLED_BY_DEFAULT else "false"
+                )
+            )
+
+        for opt in filter(lambda o: not o.hide, configs):
+            if type(opt.default) == list:
+                default = '[\n    "{}"\n    ]'.format('",\n    "'.join(opt.default))
+            elif opt.default:
+                default = toml.TomlEncoder().dump_value(opt.default)
+            else:
+                default = '""'
+
+            destination_file.write("# {comment}\n".format(comment=opt.description))
+            destination_file.write(
+                "{key} = {value}\n".format(key=opt.name, value=default)
+            )
+        destination_file.write("\n")
 
 
 if __name__ == "__main__":

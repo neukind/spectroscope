@@ -7,9 +7,7 @@ from spectroscope.model.update import (
     ValidatorStatusUpdate,
     UpdateBatch,
 )
-from spectroscope.module import Module
-from spectroscope.module.plugin import BasePlugin
-from spectroscope.module.subscriber import Subscriber
+from spectroscope.module import Module, Plugin, Subscriber
 from typing import List, Set, Tuple, Type
 
 
@@ -30,7 +28,7 @@ class BeaconChainStreamer:
         for module, config in modules:
             if issubclass(module, Subscriber):
                 self.subscribers.append(module.register(**config))
-            elif issubclass(module, BasePlugin):
+            elif issubclass(module, Plugin):
                 self.plugins.append(module.register(**config))
             else:
                 raise TypeError
