@@ -97,6 +97,7 @@ def init(destination_file: click.utils.LazyFile, force: bool):
     for module, configs in config_data.items():
         destination_file.write("[{section}]\n".format(section=module))
         if module not in SYSTEM_MODULES:
+            destination_file.write("# enable or disable the module\n")
             destination_file.write(
                 "enabled = {auto}\n".format(
                     auto="true" if module in ENABLED_BY_DEFAULT else "false"
