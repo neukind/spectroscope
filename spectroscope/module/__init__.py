@@ -1,6 +1,6 @@
 import abc
 from pydantic import BaseModel
-from spectroscope.model.base import Event
+from spectroscope.model import Event
 from typing import Any, List, Optional, Type
 
 ENABLED_BY_DEFAULT = ["balance_alert", "status_alert"]

@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from spectroscope.model.base import Action
+from spectroscope.model import Action
 
 
 class Notification(BaseModel):

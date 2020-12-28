@@ -1,6 +1,6 @@
 from ethereumapis.v1alpha1.validator_pb2 import ValidatorStatus
 from pydantic import BaseModel
-from spectroscope.model.base import Event, ChainTimestamp, ValidatorIdentity
+from spectroscope.model import Event, ChainTimestamp, ValidatorIdentity
 from typing import List
 
 

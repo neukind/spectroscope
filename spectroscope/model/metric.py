@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from spectroscope.model.base import ChainTimestamp, ValidatorIdentity
+from spectroscope.model import ChainTimestamp, ValidatorIdentity
 from typing import List, Optional
 from uuid import UUID
 

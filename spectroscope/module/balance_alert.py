@@ -1,5 +1,5 @@
 from spectroscope.model.alert import Alert, Action, RaiseAlert, ClearAlert
-from spectroscope.model.base import ValidatorIdentity
+from spectroscope.model import ValidatorIdentity
 from spectroscope.model.update import UpdateBatch, ValidatorBalanceUpdate
 from spectroscope.module import Subscriber
 from typing import List

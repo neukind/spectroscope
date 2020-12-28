@@ -4,7 +4,7 @@ from nose2.tools import params
 
 from ethereumapis.v1alpha1 import beacon_chain_pb2, validator_pb2
 from spectroscope.beacon_client import BeaconChainStreamer
-from spectroscope.model.base import ChainTimestamp, Event, ValidatorIdentity
+from spectroscope.model import ChainTimestamp, Event, ValidatorIdentity
 from spectroscope.model.update import (
     ValidatorBalanceUpdate,
     ValidatorStatusUpdate,

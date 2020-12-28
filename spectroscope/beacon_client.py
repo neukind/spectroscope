@@ -1,7 +1,7 @@
 import spectroscope
 
 from ethereumapis.v1alpha1 import beacon_chain_pb2, beacon_chain_pb2_grpc
-from spectroscope.model.base import ChainTimestamp, ValidatorIdentity
+from spectroscope.model import ChainTimestamp, ValidatorIdentity
 from spectroscope.model.update import (
     ValidatorBalanceUpdate,
     ValidatorStatusUpdate,
