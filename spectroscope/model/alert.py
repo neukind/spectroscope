@@ -7,9 +7,10 @@ class Alert(BaseModel):
 
 
 class AlertAction(Action):
+    alert: Alert
+
     def __init__(self, alert: Alert):
-        self.alert = alert
-        super().__init__()
+        super().__init__(alert=alert)
 
 
 class RaiseAlert(AlertAction):

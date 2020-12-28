@@ -43,7 +43,7 @@ class BalanceAlert(Subscriber):
                         )
                         self._alerting_validators.remove(pk)
                     self._highest_balances[pk] = update.balance
-                elif update.balance <= hb - self._penalty_tolerance:
+                elif update.balance < hb - self._penalty_tolerance:
                     ret.append(
                         RaiseAlert(
                             BalancePenalty(
