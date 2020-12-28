@@ -2,13 +2,13 @@ import click
 import grpc
 import importlib
 import os
-import pkg_resources
 import sys
 import spectroscope
 import toml
 
 from click_default_group import DefaultGroup
 from ethereumapis.v1alpha1 import beacon_chain_pb2_grpc
+from pkg_resources import load_entry_point
 from spectroscope.beacon_client import BeaconChainStreamer
 from spectroscope.config import DefaultConfigBuilder
 from spectroscope.module import ConfigOption, ENABLED_BY_DEFAULT
@@ -37,22 +37,28 @@ def cli():
     "-c",
     "--config",
     "config_file",
-    type=str,
+    type=click.File("r"),
     default=DEFAULT_CONFIG_PATH,
     help="Config file path",
 )
-def run(config_file: str):
+def run(config_file: click.utils.LazyFile):
     """Run the Spectroscope monitoring agent."""
 
     log.info("Spectroscope starting up")
 
     log.info("Loading configuration")
-    config_root = toml.load(config_file)
+    config_root = toml.loads(config_file.read())
 
-    scope_config = config_root.get("spectroscope", dict())
-    grpc_endpoint = scope_config["eth2_endpoint"]
+    try:
+        scope_config = config_root.get("spectroscope", dict())
+        grpc_endpoint = scope_config["eth2_endpoint"]
+        validator_set = set(scope_config["pubkeys"])
+    except KeyError as e:
+        raise click.ClickException(
+            "{} expected but not found in config file. Exiting.".format(e)
+        )
+
     log.info("gRPC ETH2 endpoint is {}".format(grpc_endpoint))
-    validator_set = set(scope_config["pubkeys"])
     log.info("Found {} unique validator keys to watch".format(len(validator_set)))
 
     modules = list()
@@ -60,12 +66,9 @@ def run(config_file: str):
         if module not in SYSTEM_MODULES and config.get("enabled", False):
             try:
                 log.info("Loading module {} with {} args".format(module, len(config)))
-                m = pkg_resources.load_entry_point(
-                    "spectroscope", "spectroscope.module", module
-                )
+                m = load_entry_point("spectroscope", "spectroscope.module", module)
             except ImportError:
-                log.error("Couldn't import module {}".format(module))
-                sys.exit(1)
+                raise click.ClickException("Couldn't import module {}".format(module))
             modules.append((m, config))
     log.info("Loaded {} modules".format(len(modules)))
 
