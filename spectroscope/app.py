@@ -97,7 +97,13 @@ def init(destination_file: click.utils.LazyFile, force: bool):
         )
 
     config_data = DefaultConfigBuilder.build()
+    log.info("Found {} modules".format(len(config_data.items())))
     for module, configs in config_data.items():
+        log.info(
+            "Writing configuration for{system}module {module}".format(
+                system=" system " if module in SYSTEM_MODULES else " ", module=module
+            )
+        )
         destination_file.write("[{section}]\n".format(section=module))
         if module not in SYSTEM_MODULES:
             destination_file.write("# enable or disable the module\n")

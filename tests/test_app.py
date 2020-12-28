@@ -4,6 +4,7 @@ from click import ClickException
 from click.testing import CliRunner
 
 import spectroscope.app
+from tests.test_config import FakeModuleEntryPoint, FakeModuleWithOptions
 
 BASIC_CONFIG = """
 [spectroscope]
@@ -25,21 +26,19 @@ baz = ["qux"]
 """
 
 
-class CliTest(unittest.TestCase):
-    pass
-
-
 class RunTest(unittest.TestCase):
+    _CLICK_INVOKE_PATH = spectroscope.app.run
+
     def setUp(self):
         self.runner = CliRunner()
 
     def runWithConfig(self, *configs):
         with self.runner.isolated_filesystem():
-            with open("config.toml", "w") as config_file:
+            with open(spectroscope.app.DEFAULT_CONFIG_PATH, "w") as config_file:
                 for config in configs:
                     config_file.write(config)
 
-            return self.runner.invoke(spectroscope.app.run)
+            return self.runner.invoke(self._CLICK_INVOKE_PATH)
 
     def test_empty_config(self):
         result = self.runWithConfig("")
@@ -71,6 +70,48 @@ class RunTest(unittest.TestCase):
         )
 
 
+class CliTest(RunTest):
+    _CLICK_INVOKE_PATH = spectroscope.app.cli
+
+
 class InitTest(unittest.TestCase):
     def setUp(self):
         self.runner = CliRunner()
+
+    def runInit(self):
+        with self.runner.isolated_filesystem():
+            result = self.runner.invoke(spectroscope.app.init)
+            try:
+                with open(spectroscope.app.DEFAULT_CONFIG_PATH, "r") as file:
+                    contents = file.read()
+            except FileNotFoundError:
+                contents = None
+
+            return result, contents
+
+    @patch("spectroscope.config.iter_entry_points")
+    def test_no_modules(self, ep_iter_mock):
+        ep_iter_mock.return_value = []
+        result, contents = self.runInit()
+        self.assertIsNone(result.exception)
+        self.assertRegex(contents, "^\[spectroscope\]\n")
+
+    @patch("spectroscope.config.iter_entry_points")
+    def test_prohibit_overwrite(self, ep_iter_mock):
+        ep_iter_mock.return_value = []
+        with self.runner.isolated_filesystem():
+            with open(spectroscope.app.DEFAULT_CONFIG_PATH, "w") as file:
+                file.write("")
+            result = self.runner.invoke(spectroscope.app.init)
+
+        self.assertIsInstance(result.exception.__context__, ClickException)
+
+    @patch("spectroscope.config.iter_entry_points")
+    def test_with_fake_module(self, ep_iter_mock):
+        ep_iter_mock.return_value = [
+            FakeModuleEntryPoint("fake_module", FakeModuleWithOptions())
+        ]
+        result, contents = self.runInit()
+        self.assertIsNone(result.exception)
+        self.assertRegex(contents, "^\[spectroscope\]\n")
+        self.assertRegex(contents, "\n\[fake_module\]\n")
