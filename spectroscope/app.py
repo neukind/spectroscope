@@ -105,7 +105,7 @@ def init(destination_file: click.utils.LazyFile, force: bool):
             )
 
         for opt in filter(lambda o: not o.hide, configs):
-            if type(opt.default) == list:
+            if opt.param_type == list:
                 default = '[\n    "{}"\n    ]'.format('",\n    "'.join(opt.default))
             elif opt.default:
                 default = toml.TomlEncoder().dump_value(opt.default)
