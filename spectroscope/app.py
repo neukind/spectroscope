@@ -2,6 +2,7 @@ import click
 import grpc
 import importlib
 import os
+import pkg_resources
 import sys
 import spectroscope
 import toml
@@ -11,9 +12,12 @@ from ethereumapis.v1alpha1 import beacon_chain_pb2_grpc
 from spectroscope.beacon_client import BeaconChainStreamer
 from spectroscope.config import DefaultConfigBuilder
 from spectroscope.module import ConfigOption, ENABLED_BY_DEFAULT
+from typing import List
 
-SYSTEM_MODULES = ["spectroscope"]
-DEFAULT_CONFIG_PATH = "config.toml"
+# System modules should be considered separate; they are for configuration purposes only.
+SYSTEM_MODULES: List[str] = ["spectroscope"]
+
+DEFAULT_CONFIG_PATH: str = "config.toml"
 
 
 log = spectroscope.log()
@@ -21,6 +25,10 @@ log = spectroscope.log()
 
 @click.group(cls=DefaultGroup, default="run", default_if_no_args=True)
 def cli():
+    """
+    The Spectroscope CLI program. By default, it will run `spectroscope run` if
+    no command is given.
+    """
     pass
 
 
@@ -52,11 +60,13 @@ def run(config_file: str):
         if module not in SYSTEM_MODULES and config.get("enabled", False):
             try:
                 log.info("Loading module {} with {} args".format(module, len(config)))
-                m = importlib.import_module("spectroscope.module.{}".format(module))
+                m = pkg_resources.load_entry_point(
+                    "spectroscope", "spectroscope.module", module
+                )
             except ImportError:
                 log.error("Couldn't import module {}".format(module))
                 sys.exit(1)
-            modules.append((m.SPECTROSCOPE_MODULE, config))
+            modules.append((m, config))
     log.info("Loaded {} modules".format(len(modules)))
 
     log.info("Opening gRPC channel")

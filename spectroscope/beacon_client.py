@@ -15,6 +15,13 @@ log = spectroscope.log()
 
 
 class BeaconChainStreamer:
+    """Stream ValidatorInfo messages from the beacon chain gRPC endpoint.
+
+    Args:
+        stub: gRPC stub interface to the beacon chain. Useful for dependency injection.
+        modules: Modules and arguments to initialize before streaming messages.
+    """
+
     def __init__(
         self,
         stub: beacon_chain_pb2_grpc.BeaconChainStub,
