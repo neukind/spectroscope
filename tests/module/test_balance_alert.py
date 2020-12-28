@@ -15,7 +15,7 @@ class BalanceAlertTest(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def test_register(self):
+    def test_defaults(self):
         ba = BalanceAlert.register()
         self.assertEquals(ba._penalty_tolerance, 0)
 

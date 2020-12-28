@@ -7,6 +7,7 @@ class Notification(BaseModel):
 
 
 class Notify(Action):
+    notification: Notification
+
     def __init__(self, notification: Notification):
-        self.notification = notification
-        super().__init__()
+        super().__init__(notification=notification)

@@ -7,6 +7,7 @@ from typing import List
 
 
 class StatusChange(Alert, Notification):
+    validator: ValidatorIdentity
     previousStatus: int
     currentStatus: int
 
@@ -50,6 +51,7 @@ class StatusAlert(Subscriber):
                         and update.status not in self._alert_when_exit
                     ):
                         ret.append(RaiseAlert(status_change))
+                    self._statuses[pk] = update.status
             else:
                 self._statuses[pk] = update.status
 
