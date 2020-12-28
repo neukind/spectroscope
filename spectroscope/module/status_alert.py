@@ -1,9 +1,9 @@
 from spectroscope.model.alert import Alert, Action, RaiseAlert
-from spectroscope.model import ValidatorIdentity
+from spectroscope.model import Event, ValidatorIdentity
 from spectroscope.model.notification import Notification, Notify
 from spectroscope.model.update import UpdateBatch, ValidatorStatusUpdate
 from spectroscope.module import Subscriber
-from typing import List
+from typing import Dict, List
 
 
 class StatusChange(Alert, Notification):
@@ -19,7 +19,7 @@ class StatusAlert(Subscriber):
     _consumed_types = [ValidatorStatusUpdate]
 
     def __init__(self, notify_when_enter: List[int], alert_when_exit: List[int]):
-        self._statuses = dict()
+        self._statuses: Dict[bytes, int] = dict()
         self._most_recent_epoch = -1
         self._notify_when_enter = notify_when_enter
         self._alert_when_exit = alert_when_exit
@@ -32,7 +32,7 @@ class StatusAlert(Subscriber):
         )
 
     def consume(self, batch: UpdateBatch) -> List[Action]:
-        ret = list()
+        ret: List[Action] = list()
 
         if batch.timestamp.epoch < self._most_recent_epoch:
             return ret

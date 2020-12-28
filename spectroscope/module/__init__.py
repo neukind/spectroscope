@@ -1,6 +1,7 @@
 import abc
 from pydantic import BaseModel
-from spectroscope.model import Event
+from spectroscope.model import Action, Event
+from spectroscope.model.update import UpdateBatch
 from typing import Any, List, Optional, Type
 
 ENABLED_BY_DEFAULT = ["balance_alert", "status_alert"]
@@ -28,17 +29,17 @@ class Module(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def consume(self, updates: List[Event]):
+    def consume(self, updates: Any):
         pass
 
 
 class Plugin(Module):
     @abc.abstractmethod
-    def consume(self, updates: List[Event]):
+    def consume(self, updates: List[Action]):
         pass
 
 
 class Subscriber(Module):
     @abc.abstractmethod
-    def consume(self, updates: List[Event]):
+    def consume(self, updates: UpdateBatch) -> List[Action]:
         pass

@@ -59,6 +59,6 @@ class Alerta(Plugin):
             attributes={"pubkey": pubkey.hex()},
         )
 
-    def consume(self, events: List[Union[RaiseAlert, ClearAlert]]):
+    def consume(self, events: List[Action]):
         for event in events:
             self._handlers[type(event)](**event.alert.get_dict())

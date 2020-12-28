@@ -2,7 +2,7 @@ from spectroscope.model.alert import Alert, Action, RaiseAlert, ClearAlert
 from spectroscope.model import ValidatorIdentity
 from spectroscope.model.update import UpdateBatch, ValidatorBalanceUpdate
 from spectroscope.module import Subscriber
-from typing import List
+from typing import Dict, List, Set
 
 
 class BalancePenalty(Alert):
@@ -17,8 +17,8 @@ class BalanceAlert(Subscriber):
     _consumed_types = [ValidatorBalanceUpdate]
 
     def __init__(self, penalty_tolerance: int):
-        self._highest_balances = dict()
-        self._alerting_validators = set()
+        self._highest_balances: Dict[bytes, int] = dict()
+        self._alerting_validators: Set[bytes] = set()
         self._most_recent_epoch = -1
         self._penalty_tolerance = penalty_tolerance
 
@@ -29,7 +29,7 @@ class BalanceAlert(Subscriber):
         )
 
     def consume(self, batch: UpdateBatch) -> List[Action]:
-        ret = list()
+        ret: List[Action] = list()
 
         if batch.timestamp.epoch < self._most_recent_epoch:
             return ret
