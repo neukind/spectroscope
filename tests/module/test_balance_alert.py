@@ -17,7 +17,7 @@ class BalanceAlertTest(unittest.TestCase):
 
     def test_defaults(self):
         ba = BalanceAlert.register()
-        self.assertEquals(ba._penalty_tolerance, 0)
+        self.assertEqual(ba._penalty_tolerance, 0)
 
     def test_consume_single(self):
         ba = BalanceAlert.register()
@@ -26,7 +26,7 @@ class BalanceAlertTest(unittest.TestCase):
             timestamp=ChainTimestamp(epoch=0, slot=0),
             updates=[ValidatorBalanceUpdate(balance=0)],
         )
-        self.assertEquals(ba.consume(update), [])
+        self.assertEqual(ba.consume(update), [])
 
     def test_consume_multiple(self):
         ba = BalanceAlert.register()
@@ -57,14 +57,14 @@ class BalanceAlertTest(unittest.TestCase):
             timestamp=ChainTimestamp(epoch=0, slot=0),
             updates=[ValidatorBalanceUpdate(balance=500)],
         )
-        self.assertEquals(ba.consume(update), [])
+        self.assertEqual(ba.consume(update), [])
 
         alert_update = UpdateBatch(
             validator=self.validator_one,
             timestamp=ChainTimestamp(epoch=1, slot=32),
             updates=[ValidatorBalanceUpdate(balance=499)],
         )
-        self.assertEquals(
+        self.assertEqual(
             ba.consume(alert_update),
             [RaiseAlert(BalancePenalty(validator=self.validator_one, loss=1))],
         )
@@ -74,14 +74,14 @@ class BalanceAlertTest(unittest.TestCase):
             timestamp=ChainTimestamp(epoch=2, slot=64),
             updates=[ValidatorBalanceUpdate(balance=500)],
         )
-        self.assertEquals(ba.consume(noop_update), [])
+        self.assertEqual(ba.consume(noop_update), [])
 
         clear_update = UpdateBatch(
             validator=self.validator_one,
             timestamp=ChainTimestamp(epoch=3, slot=96),
             updates=[ValidatorBalanceUpdate(balance=501)],
         )
-        self.assertEquals(
+        self.assertEqual(
             ba.consume(clear_update),
             [ClearAlert(BalancePenalty(validator=self.validator_one))],
         )
@@ -93,11 +93,11 @@ class BalanceAlertTest(unittest.TestCase):
             timestamp=ChainTimestamp(epoch=2, slot=64),
             updates=[ValidatorBalanceUpdate(balance=500)],
         )
-        self.assertEquals(ba.consume(update), [])
+        self.assertEqual(ba.consume(update), [])
 
         alert_update = UpdateBatch(
             validator=self.validator_one,
             timestamp=ChainTimestamp(epoch=1, slot=32),
             updates=[ValidatorBalanceUpdate(balance=0)],
         )
-        self.assertEquals(ba.consume(alert_update), [])
+        self.assertEqual(ba.consume(alert_update), [])

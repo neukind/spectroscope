@@ -18,8 +18,8 @@ class StatusAlertTest(unittest.TestCase):
 
     def test_defaults(self):
         sa = StatusAlert.register()
-        self.assertEquals(sa._notify_when_enter, [1])
-        self.assertEquals(sa._alert_when_exit, [2, 3])
+        self.assertEqual(sa._notify_when_enter, [1])
+        self.assertEqual(sa._alert_when_exit, [2, 3])
 
     def test_consume_single(self):
         sa = StatusAlert.register()
@@ -28,7 +28,7 @@ class StatusAlertTest(unittest.TestCase):
             timestamp=ChainTimestamp(epoch=0, slot=0),
             updates=[ValidatorStatusUpdate(status=0)],
         )
-        self.assertEquals(sa.consume(update), [])
+        self.assertEqual(sa.consume(update), [])
 
     def test_consume_multiple(self):
         sa = StatusAlert.register()
@@ -59,14 +59,14 @@ class StatusAlertTest(unittest.TestCase):
             timestamp=ChainTimestamp(epoch=0, slot=0),
             updates=[ValidatorStatusUpdate(status=0)],
         )
-        self.assertEquals(sa.consume(update), [])
+        self.assertEqual(sa.consume(update), [])
 
         activation_update = UpdateBatch(
             validator=self.validator_one,
             timestamp=ChainTimestamp(epoch=1, slot=32),
             updates=[ValidatorStatusUpdate(status=1)],
         )
-        self.assertEquals(
+        self.assertEqual(
             sa.consume(activation_update),
             [
                 Notify(
@@ -84,21 +84,21 @@ class StatusAlertTest(unittest.TestCase):
             timestamp=ChainTimestamp(epoch=0, slot=0),
             updates=[ValidatorStatusUpdate(status=2)],
         )
-        self.assertEquals(sa.consume(update), [])
+        self.assertEqual(sa.consume(update), [])
 
         activation_update = UpdateBatch(
             validator=self.validator_one,
             timestamp=ChainTimestamp(epoch=1, slot=32),
             updates=[ValidatorStatusUpdate(status=3)],
         )
-        self.assertEquals(sa.consume(activation_update), [])
+        self.assertEqual(sa.consume(activation_update), [])
 
         alert_update = UpdateBatch(
             validator=self.validator_one,
             timestamp=ChainTimestamp(epoch=2, slot=64),
             updates=[ValidatorStatusUpdate(status=4)],
         )
-        self.assertEquals(
+        self.assertEqual(
             sa.consume(alert_update),
             [
                 RaiseAlert(
@@ -116,11 +116,11 @@ class StatusAlertTest(unittest.TestCase):
             timestamp=ChainTimestamp(epoch=2, slot=64),
             updates=[ValidatorStatusUpdate(status=3)],
         )
-        self.assertEquals(sa.consume(update), [])
+        self.assertEqual(sa.consume(update), [])
 
         alert_update = UpdateBatch(
             validator=self.validator_one,
             timestamp=ChainTimestamp(epoch=1, slot=32),
             updates=[ValidatorStatusUpdate(status=4)],
         )
-        self.assertEquals(sa.consume(alert_update), [])
+        self.assertEqual(sa.consume(alert_update), [])

@@ -25,7 +25,7 @@ class DefaultConfigBuilderTest(unittest.TestCase):
     @patch("spectroscope.config.iter_entry_points")
     def test_build_no_modules(self, ep_iter_mock):
         ep_iter_mock.return_value = []
-        self.assertEquals(DefaultConfigBuilder.build(), SYSTEM_MODULE_CONFIG)
+        self.assertEqual(DefaultConfigBuilder.build(), SYSTEM_MODULE_CONFIG)
 
     @patch("spectroscope.config.iter_entry_points")
     def test_build(self, ep_iter_mock):
@@ -37,7 +37,7 @@ class DefaultConfigBuilderTest(unittest.TestCase):
         ep_two = FakeModuleEntryPoint("module_two", FakeModuleWithOptions())
 
         ep_iter_mock.return_value = [ep_one, ep_two]
-        self.assertEquals(
+        self.assertEqual(
             DefaultConfigBuilder.build(),
             (lambda d: d.update(SYSTEM_MODULE_CONFIG) or d)(
                 {

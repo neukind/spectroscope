@@ -1,6 +1,5 @@
 import unittest
 from unittest.mock import Mock, call
-from nose2.tools import params
 
 from ethereumapis.v1alpha1 import beacon_chain_pb2, validator_pb2
 from spectroscope.beacon_client import BeaconChainStreamer
@@ -61,8 +60,8 @@ class BeaconChainStreamerTest(unittest.TestCase):
         with self.assertRaises(StopIteration):
             next(generator)
 
-    @params([], [bytes.fromhex("a" * 96)])
-    def test_generate_messages(self, validator_set):
+    def test_generate_messages(self):
+        validator_set = [bytes.fromhex("a" * 96)]
         bcs = BeaconChainStreamer(self.stub_mock, [])
         bcs.add_validators(validator_set)
 
