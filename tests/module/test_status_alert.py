@@ -7,7 +7,7 @@ from spectroscope.model.update import UpdateBatch, ValidatorStatusUpdate
 from spectroscope.module.status_alert import StatusAlert, StatusChange
 
 
-class TestStatusAlert(unittest.TestCase):
+class StatusAlertTest(unittest.TestCase):
     def setUp(self):
         self.validator_one = ValidatorIdentity(pubkey=bytes.fromhex("a" * 96), idx=0)
         self.validator_two = ValidatorIdentity(pubkey=bytes.fromhex("b" * 96), idx=1)
