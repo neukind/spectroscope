@@ -28,7 +28,7 @@ SYSTEM_MODULE_CONFIG = {
 class DefaultConfigBuilder:
     @staticmethod
     def build() -> Dict[str, List[ConfigOption]]:
-        config_data = SYSTEM_MODULE_CONFIG
+        config_data = dict(SYSTEM_MODULE_CONFIG)
 
         for module_ep in iter_entry_points("spectroscope.module"):
             module = module_ep.load()
