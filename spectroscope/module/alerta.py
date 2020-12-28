@@ -61,4 +61,4 @@ class Alerta(Plugin):
 
     def consume(self, events: List[Union[RaiseAlert, ClearAlert]]):
         for event in events:
-            self._handlers[type(event)](event.alert)
+            self._handlers[type(event)](**event.alert.get_dict())

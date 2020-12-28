@@ -1,9 +1,17 @@
 from pydantic import BaseModel
-from spectroscope.model import Action
+from spectroscope.model import Action, ValidatorIdentity
 
 
 class Alert(BaseModel):
-    pass
+    validator: ValidatorIdentity
+    alert_type: str
+
+    def get_dict(self):
+        vals = dict()
+        vals["event"] = self.alert_type
+        vals["pubkey"] = self.validator.pubkey
+        vals["idx"] = self.validator.idx
+        return vals
 
 
 class AlertAction(Action):

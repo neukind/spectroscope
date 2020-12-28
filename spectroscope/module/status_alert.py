@@ -7,7 +7,7 @@ from typing import List
 
 
 class StatusChange(Alert, Notification):
-    validator: ValidatorIdentity
+    alert_type: str = "StatusChange"
     previousStatus: int
     currentStatus: int
 

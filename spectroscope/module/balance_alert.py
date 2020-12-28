@@ -6,7 +6,7 @@ from typing import List
 
 
 class BalancePenalty(Alert):
-    validator: ValidatorIdentity
+    alert_type: str = "BalancePenalty"
     loss: int = 0
 
 
