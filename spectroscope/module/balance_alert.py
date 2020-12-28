@@ -9,6 +9,9 @@ class BalancePenalty(Alert):
     alert_type: str = "BalancePenalty"
     loss: int = 0
 
+    def get_value(self):
+        return self.loss
+
 
 class BalanceAlert(Subscriber):
     _consumed_types = [ValidatorBalanceUpdate]

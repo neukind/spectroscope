@@ -38,7 +38,7 @@ class Alerta(Plugin):
             client=Client(endpoint=kwargs["endpoint"], key=kwargs["api_key"]),
         )
 
-    def _alert(self, idx: int, pubkey: bytes, event: str, value: str = None):
+    def _alert(self, idx: int, pubkey: bytes, event: str, value: str = None, **kwargs):
         self._client.send_alert(
             environment=ENVIRONMENT,
             resource="{}-{}".format(RESOURCE, idx),
@@ -49,7 +49,7 @@ class Alerta(Plugin):
             attributes={"pubkey": pubkey.hex()},
         )
 
-    def _clear(self, idx: int, pubkey: bytes, event: str):
+    def _clear(self, idx: int, pubkey: bytes, event: str, **kwargs):
         self._client.send_alert(
             environment=ENVIRONMENT,
             resource="{}-{}".format(RESOURCE, idx),

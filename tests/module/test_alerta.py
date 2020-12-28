@@ -11,6 +11,9 @@ FAKE_PUBKEY = "a" * 96
 class FakeAlert(Alert):
     alert_type: str = "FakeAlert"
 
+    def get_value(self):
+        return "FakeValue"
+
     @classmethod
     def get(cls):
         return cls(
@@ -41,7 +44,7 @@ class AlertaTest(unittest.TestCase):
             resource="Eth2Staking-0",
             severity="major",
             event="FakeAlert",
-            value=None,
+            value="FakeValue",
             text="https://mainnet.beaconcha.in/validator/0",
             attributes={"pubkey": FAKE_PUBKEY},
         )

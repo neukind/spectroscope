@@ -11,6 +11,9 @@ class StatusChange(Alert, Notification):
     previousStatus: int
     currentStatus: int
 
+    def get_value(self):
+        return "{} -> {}".format(self.previousStatus, self.currentStatus)
+
 
 class StatusAlert(Subscriber):
     _consumed_types = [ValidatorStatusUpdate]
