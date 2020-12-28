@@ -85,3 +85,19 @@ class BalanceAlertTest(unittest.TestCase):
             ba.consume(clear_update),
             [ClearAlert(BalancePenalty(validator=self.validator_one))],
         )
+
+    def test_ignore_history_rewrite(self):
+        ba = BalanceAlert.register()
+        update = UpdateBatch(
+            validator=self.validator_one,
+            timestamp=ChainTimestamp(epoch=2, slot=64),
+            updates=[ValidatorBalanceUpdate(balance=500)],
+        )
+        self.assertEquals(ba.consume(update), [])
+
+        alert_update = UpdateBatch(
+            validator=self.validator_one,
+            timestamp=ChainTimestamp(epoch=1, slot=32),
+            updates=[ValidatorBalanceUpdate(balance=0)],
+        )
+        self.assertEquals(ba.consume(alert_update), [])
