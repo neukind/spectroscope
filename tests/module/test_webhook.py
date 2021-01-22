@@ -15,7 +15,7 @@ class FakeNotification(Notification):
 
 class WebhookTest(unittest.TestCase):
     def setUp(self):
-        self.webhook = Webhook(FAKE_ENDPOINT)
+        self.webhook = Webhook.register(uri_endpoint=FAKE_ENDPOINT)
 
     @patch("spectroscope.module.webhook.requests")
     def testNotifyOnce(self, requests_mock):
