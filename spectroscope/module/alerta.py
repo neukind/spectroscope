@@ -1,7 +1,7 @@
 from alertaclient.api import Client
 from spectroscope.model.alert import Action, RaiseAlert, ClearAlert
 from spectroscope.module import ConfigOption, Plugin
-from typing import Callable, List, Type, Union
+from typing import List
 
 BEACON_CHAIN_URL = "https://mainnet.beaconcha.in/validator/"
 ENVIRONMENT = "Production"

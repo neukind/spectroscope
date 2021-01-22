@@ -4,7 +4,6 @@ setuptools.setup(
     name="spectroscope",
     packages=setuptools.find_packages(exclude=["tests"]),
     install_requires=[
-        "alerta>=8.2.0",
         "click>=7.1.2",
         "click-default-group>=1.2.2",
         "ethereumapis>=0.12.0",
@@ -12,6 +11,11 @@ setuptools.setup(
         "pydantic>=1.7.3",
         "toml>=0.10.2",
     ],
+    extras_require={
+        "alerta": ["alerta>=8.2.0"],
+        "webhook": ["requests>=2.7.0"],
+        "zenduty": ["zenduty-api>=0.2"],
+    },
     python_requires=">=3.6",
     entry_points={
         "console_scripts": ["spectroscope = spectroscope.app:cli"],
@@ -20,6 +24,7 @@ setuptools.setup(
             "balance_alert = spectroscope.module.balance_alert:BalanceAlert",
             "status_alert = spectroscope.module.status_alert:StatusAlert",
             "webhook = spectroscope.module.webhook:Webhook",
+            "zenduty = spectroscope.module.zenduty:Zenduty",
         ],
     },
 )
