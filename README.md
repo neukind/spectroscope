@@ -21,7 +21,7 @@ Spectroscope is a monitoring agent for [Ethereum 2.0](https://ethereum.org/en/et
 
 ## Installing
 
-### With setuptools
+### With pip
 
 ```bash
 git clone https://github.com/neukind/spectroscope.git
@@ -31,7 +31,8 @@ cd spectroscope
 python3 -m venv venv
 source venv/bin/activate
 
-python setup.py install
+# you can pull in dependencies for extra modules as necessary
+pip install .[alerta,webhook,zenduty]
 spectroscope init  # installs a fresh config to config.toml
 vim config.toml    # modify your config as necessary
 spectroscope --config config.toml
@@ -39,11 +40,22 @@ spectroscope --config config.toml
 
 ### With Docker
 
-TODO
+```bash
+git clone https://github.com/neukind/spectroscope.git
+cd spectroscope
+docker build -t spectroscope:local .
+docker run --rm spectroscope:local --help
+```
 
 ## Contributing
 
 Contributions are always welcome in the form of [pull requests](https://github.com/neukind/spectroscope/pulls). All contributions must follow the [community code of conduct](CODE_OF_CONDUCT.md).
+
+For ease of testing multiple Python environments, we use [`tox`](https://tox.readthedocs.io/en/latest/) in our CI pipelines.
+
+You can invoke `tox` from the root of the repository to run the unit-test suite against the test runner.
+
+To run the unit-test suite against your local Python installation, invoke `python -m unittest`.
 
 ## Contact
 
