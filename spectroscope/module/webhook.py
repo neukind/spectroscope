@@ -10,7 +10,9 @@ class Webhook(Plugin):
 
     config_options = [
         ConfigOption(
-            name="uri_endpoint", param_type=str, description="Endpoint to call webhook from"
+            name="uri_endpoint",
+            param_type=str,
+            description="Endpoint to call webhook from",
         )
     ]
 
@@ -23,4 +25,4 @@ class Webhook(Plugin):
 
     def consume(self, events: List[Action]):
         for event in events:
-            requests.post(self._uri_endpoint, json=event.notification)
+            requests.post(self._uri_endpoint, json=dict(event.notification))
