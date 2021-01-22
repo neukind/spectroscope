@@ -1,0 +1,14 @@
+# editor-specific config
+/.vscode
+
+# config that should not be checked in
+/config.toml
+
+# compiled python output
+__pycache__
+
+# build artifacts
+/.coverage
+/.eggs
+/.tox
+/spectroscope.egg-info
