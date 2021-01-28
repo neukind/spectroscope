@@ -57,7 +57,7 @@ class BeaconChainStreamer:
 
     def stream_responses(self, stream):
         for validator_info in stream:
-            log.info(
+            log.debug(
                 "Received update for validator idx {}".format(validator_info.index)
             )
             updates = [
