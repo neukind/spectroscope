@@ -23,6 +23,7 @@ setuptools.setup(
             "alerta = spectroscope.module.alerta:Alerta",
             "balance_alert = spectroscope.module.balance_alert:BalanceAlert",
             "status_alert = spectroscope.module.status_alert:StatusAlert",
+            "activation_alert = spectroscope.module.activation_alert:ActivationAlert",
             "webhook = spectroscope.module.webhook:Webhook",
             "zenduty = spectroscope.module.zenduty:Zenduty",
         ],
