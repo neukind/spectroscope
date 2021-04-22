@@ -1,5 +1,6 @@
 from alertaclient.api import Client
 from spectroscope.model.alert import Action, RaiseAlert, ClearAlert
+from spectroscope.model.notification import Notify
 from spectroscope.module import ConfigOption, Plugin
 from typing import List
 
@@ -9,7 +10,7 @@ RESOURCE = "Eth2Staking"
 
 
 class Alerta(Plugin):
-    _consumed_types = [RaiseAlert, ClearAlert]
+    _consumed_types = [RaiseAlert, ClearAlert, Notify]
 
     config_options = [
         ConfigOption(
@@ -30,6 +31,7 @@ class Alerta(Plugin):
         self._handlers = {
             RaiseAlert: self._alert,
             ClearAlert: self._clear,
+            Notify: self._notify
         }
 
     @classmethod
@@ -55,6 +57,17 @@ class Alerta(Plugin):
             resource="{}-{}".format(RESOURCE, idx),
             event=event,
             status="closed",
+            text="{}{}".format(BEACON_CHAIN_URL, idx),
+            attributes={"pubkey": pubkey.hex()},
+        )
+
+    def _notify(self, idx: int, pubkey: bytes, event: str, **kwargs):
+        self._client.send_alert(
+            environment=ENVIRONMENT,
+            resource="{}-{}".format(RESOURCE, idx),
+            severity="informational",
+            event=event,
+            value=value,
             text="{}{}".format(BEACON_CHAIN_URL, idx),
             attributes={"pubkey": pubkey.hex()},
         )
