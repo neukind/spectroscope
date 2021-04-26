@@ -12,7 +12,7 @@ import spectroscope
 log = spectroscope.log()
 
 #CONSTANTS
-UINT64_MAX = 18446744073709551615
+UINT64_MAX = 18446744073709551615 #seems like when the position / index of validator is not defined yet, the stream returns this value 
 
 class DepositStatusChange(Alert, Notification):
     alert_type: str = "DepositStatusChange"
