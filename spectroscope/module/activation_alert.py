@@ -11,6 +11,9 @@ from ethereumapis.v1alpha1.validator_pb2 import _VALIDATORSTATUS
 import spectroscope
 log = spectroscope.log()
 
+#CONSTANTS
+UINT64_MAX = 18446744073709551615
+
 class DepositStatusChange(Alert, Notification):
     alert_type: str = "DepositStatusChange"
     previousStatus: int

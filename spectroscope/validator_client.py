@@ -10,8 +10,8 @@ from typing import List, Set, Tuple, Type
 
 log = spectroscope.log()
 
-
-
+#CONSTANTS
+UINT64_MAX = 18446744073709551615
 
 class ValidatorClientStreamer:
     """Stream WaitForActivation messages from the beacon node validator gRPC endpoint.
@@ -57,6 +57,8 @@ class ValidatorClientStreamer:
         av: List[bytes] = list()
         for statuses in stream:
             for validator_info in statuses.statuses:
+                if (validator_info.index == UINT64_MAX):
+                    continue
                 log.debug("validator_info : {}".format(validator_info))
                 log.debug(
                     "Received Deposit update for validator idx {}".format(validator_info.index)
