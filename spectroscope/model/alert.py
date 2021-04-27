@@ -16,6 +16,14 @@ class Alert(BaseModel):
         vals["idx"] = self.validator.idx
         vals["value"] = self.get_value()
         return vals
+    
+    def get_str_dict(self):
+        vals = dict()
+        vals["event"] = self.alert_type
+        vals["pubkey"] = self.validator.pubkey.hex()
+        vals["idx"] = self.validator.idx
+        vals["value"] = self.get_value()
+        return vals
 
 
 class AlertAction(Action):

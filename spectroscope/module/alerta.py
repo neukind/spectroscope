@@ -10,7 +10,7 @@ RESOURCE = "Eth2Staking"
 
 
 class Alerta(Plugin):
-    _consumed_types = [RaiseAlert, ClearAlert, Notify]
+    _consumed_types = [RaiseAlert, ClearAlert]
 
     config_options = [
         ConfigOption(
@@ -30,8 +30,7 @@ class Alerta(Plugin):
         self._client = client
         self._handlers = {
             RaiseAlert: self._alert,
-            ClearAlert: self._clear,
-            Notify: self._notify
+            ClearAlert: self._clear
         }
 
     @classmethod
@@ -57,17 +56,6 @@ class Alerta(Plugin):
             resource="{}-{}".format(RESOURCE, idx),
             event=event,
             status="closed",
-            text="{}{}".format(BEACON_CHAIN_URL, idx),
-            attributes={"pubkey": pubkey.hex()},
-        )
-
-    def _notify(self, idx: int, pubkey: bytes, event: str, **kwargs):
-        self._client.send_alert(
-            environment=ENVIRONMENT,
-            resource="{}-{}".format(RESOURCE, idx),
-            severity="informational",
-            event=event,
-            value=value,
             text="{}{}".format(BEACON_CHAIN_URL, idx),
             attributes={"pubkey": pubkey.hex()},
         )

@@ -1,6 +1,5 @@
 from zenduty import ApiClient, EventsApi
 from spectroscope.model.alert import Action, RaiseAlert, ClearAlert
-from spectroscope.model.notification import Notify
 from spectroscope.module import ConfigOption, Plugin
 from typing import List
 
@@ -9,7 +8,7 @@ RESOURCE = "Eth2Staking"
 
 
 class Zenduty(Plugin):
-    _consumed_types = [RaiseAlert, ClearAlert, Notify]
+    _consumed_types = [RaiseAlert, ClearAlert]
 
     config_options = [
         ConfigOption(
@@ -24,8 +23,7 @@ class Zenduty(Plugin):
         self._integration_key = key
         self._handlers = {
             RaiseAlert: self._alert,
-            ClearAlert: self._clear,
-            Notify: self._notify
+            ClearAlert: self._clear
         }
 
     @classmethod
@@ -55,21 +53,6 @@ class Zenduty(Plugin):
                 "alert_type": "resolved",
                 "summary": "{}{}".format(BEACON_CHAIN_URL, idx),
                 "payload": {
-                    "pubkey": pubkey.hex(),
-                },
-                "entity_id": pubkey.hex(),
-            },
-        )
-
-    def _notify(self, idx: int, pubkey: bytes, event: str, value: str = None, **kwargs):
-        self._client.create_event(
-            self._integration_key,
-            {
-                "message": "{} on {}-{}".format(event, RESOURCE, idx),
-                "alert_type": "info",
-                "summary": "{}{}".format(BEACON_CHAIN_URL, idx),
-                "payload": {
-                    "value": value,
                     "pubkey": pubkey.hex(),
                 },
                 "entity_id": pubkey.hex(),

@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from spectroscope.model import Action
+from spectroscope.model import Action, ValidatorIdentity
 
 
 class Notification(BaseModel):
