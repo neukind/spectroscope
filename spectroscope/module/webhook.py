@@ -1,4 +1,4 @@
-import requests
+import requests, json
 from spectroscope.model import Action
 from spectroscope.model.notification import Notify
 from spectroscope.module import ConfigOption, Plugin
@@ -25,4 +25,4 @@ class Webhook(Plugin):
 
     def consume(self, events: List[Action]):
         for event in events:
-            requests.post(self._uri_endpoint, json=dict(event.notification))
+            requests.post(self._uri_endpoint, json=json.dumps(event.notification.get_str_dict()))  
