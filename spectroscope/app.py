@@ -5,7 +5,7 @@ import os
 import sys
 import spectroscope
 import toml
-
+import asyncio
 from click_default_group import DefaultGroup
 from ethereumapis.v1alpha1 import beacon_chain_pb2_grpc
 from ethereumapis.v1alpha1 import validator_pb2_grpc
@@ -87,23 +87,6 @@ def run(config_file: click.utils.LazyFile):
         vw.add_validators(set(map(bytes.fromhex, validator_set)))
         activated_validators = vw.stream()
         log.info("received {} new active validators of {} type".format(len(activated_validators),type(activated_validators[0])))
-
-        # processes = []
-        # result_queue = multiprocessing.Queue()
-        # while vw.get_validators():
-        #     validator_process = multiprocessing.Process(target=vw.stream, args=[result_queue])
-        #     beacon_process = multiprocessing.Process(target=bw.stream, args=[result_queue])
-        #     validator_process.start()
-        #     beacon_process.start()
-        #     processes.append(validator_process)
-        #     processes.append(beacon_process)
-        #     #wait until the validator process ends
-        #     active_validators = result_queue.get()
-        #     for process in processes:
-        #         process.terminate()
-            
-        #     vw.remove_validators(active_validators)
-        #     bw.add_validators(active_validators)
         
 
 
