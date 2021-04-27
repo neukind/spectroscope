@@ -4,8 +4,6 @@ from spectroscope.model.notification import Notify
 from spectroscope.module import ConfigOption, Plugin
 from typing import List
 
-import spectroscope
-log = spectroscope.log()
 
 class Webhook(Plugin):
     _consumed_types = [Notify]
@@ -27,5 +25,4 @@ class Webhook(Plugin):
 
     def consume(self, events: List[Action]):
         for event in events:
-            log.debug("This is the attributes of event notification class :{}".format(event.notification.get_str_dict()))
             requests.post(self._uri_endpoint, json=json.dumps(event.notification.get_str_dict()))  

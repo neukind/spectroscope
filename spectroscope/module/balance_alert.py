@@ -1,12 +1,11 @@
 from spectroscope.model.alert import Alert, Action, RaiseAlert, ClearAlert
-from spectroscope.model.notification import Notification, Notify
 from spectroscope.model import ValidatorIdentity
 from spectroscope.model.update import UpdateBatch, ValidatorBalanceUpdate
 from spectroscope.module import Subscriber
 from typing import Dict, List, Set
 
 
-class BalancePenalty(Alert, Notification):
+class BalancePenalty(Alert):
     alert_type: str = "BalancePenalty"
     loss: int = 0
 

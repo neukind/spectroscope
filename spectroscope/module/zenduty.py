@@ -23,7 +23,7 @@ class Zenduty(Plugin):
         self._integration_key = key
         self._handlers = {
             RaiseAlert: self._alert,
-            ClearAlert: self._clear
+            ClearAlert: self._clear,
         }
 
     @classmethod

@@ -1,6 +1,5 @@
 from alertaclient.api import Client
 from spectroscope.model.alert import Action, RaiseAlert, ClearAlert
-from spectroscope.model.notification import Notify
 from spectroscope.module import ConfigOption, Plugin
 from typing import List
 
@@ -30,7 +29,7 @@ class Alerta(Plugin):
         self._client = client
         self._handlers = {
             RaiseAlert: self._alert,
-            ClearAlert: self._clear
+            ClearAlert: self._clear,
         }
 
     @classmethod
