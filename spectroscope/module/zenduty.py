@@ -41,6 +41,7 @@ class Zenduty(Plugin):
                     "value": value,
                     "pubkey": pubkey.hex(),
                 },
+                "entity_id": idx,
             },
         )
 
@@ -54,6 +55,7 @@ class Zenduty(Plugin):
                 "payload": {
                     "pubkey": pubkey.hex(),
                 },
+                "entity_id": idx,
             },
         )
 
