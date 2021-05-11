@@ -20,7 +20,7 @@ class ValidatorActivationUpdate(Update):
 
 class ActivationBatch(BaseModel):
     validator: ValidatorIdentity
-    queue: int
+    activation_epoch: int
     updates: List[Update]
 
 class UpdateBatch(BaseModel):

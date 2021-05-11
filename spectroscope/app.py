@@ -15,9 +15,10 @@ from spectroscope.validator_client import ValidatorClientStreamer
 from spectroscope.config import DefaultConfigBuilder
 from spectroscope.module import ConfigOption, ENABLED_BY_DEFAULT
 from spectroscope.module import Plugin, Subscriber
+from spectroscope.streaming import SpectroscopeClient
 from typing import List
-import multiprocessing
-
+from spectroscope.exceptions import Invalid,ValidatorInvalid,ValidatorActivated
+from functools import wraps
 # System modules should be considered separate; they are for configuration purposes only.
 SYSTEM_MODULES: List[str] = ["spectroscope"]
 
@@ -26,6 +27,13 @@ DEFAULT_CONFIG_PATH: str = "config.toml"
 
 log = spectroscope.log()
 
+
+def coro(f):
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        return asyncio.run(f(*args, **kwargs))
+
+    return wrapper
 
 @click.group(cls=DefaultGroup, default="run", default_if_no_args=True)
 def cli():
@@ -45,7 +53,8 @@ def cli():
     default=DEFAULT_CONFIG_PATH,
     help="Config file path",
 )
-def run(config_file: click.utils.LazyFile):
+@coro
+async def run(config_file: click.utils.LazyFile):
     """Run the Spectroscope monitoring agent."""
 
     log.info("Spectroscope starting up")
@@ -79,14 +88,16 @@ def run(config_file: click.utils.LazyFile):
             modules.append((m, config))
     log.info("Loaded {} modules".format(len(modules)))
     log.info("Opening gRPC channel")
-    with grpc.insecure_channel(grpc_endpoint) as channel:
+    
+    async with grpc.aio.insecure_channel(grpc_endpoint) as channel:
         validator_stub = validator_pb2_grpc.BeaconNodeValidatorStub(channel)
-        log.debug("this should print True: {}".format(issubclass(modules[-1][0], Plugin)))
-        log.debug("this is the list of modules for validator client : {}".format([x for x in modules if x == special_module or issubclass(x[0],Plugin)]))
+        beacon_stub = beacon_chain_pb2_grpc.BeaconChainStub(channel)
         vw = ValidatorClientStreamer(validator_stub, [x for x in modules if x == special_module or issubclass(x[0],Plugin)])
-        vw.add_validators(set(map(bytes.fromhex, validator_set)))
-        activated_validators = vw.stream()
-        log.info("received {} new active validators of {} type".format(len(activated_validators),type(activated_validators[0])))
+        bw = BeaconChainStreamer(beacon_stub, [x for x in modules if x[0] not in special_module])
+        
+        client = SpectroscopeClient(vw,bw,validator_set)
+        client.setup()
+        await client.loop()
         
 
 
