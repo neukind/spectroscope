@@ -15,6 +15,13 @@ class ValidatorStatusUpdate(Update):
 class ValidatorBalanceUpdate(Update):
     balance: int
 
+class ValidatorActivationUpdate(Update):
+    status: int
+
+class ActivationBatch(BaseModel):
+    validator: ValidatorIdentity
+    activation_epoch: int
+    updates: List[Update]
 
 class UpdateBatch(BaseModel):
     validator: ValidatorIdentity

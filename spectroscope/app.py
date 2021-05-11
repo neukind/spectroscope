@@ -5,15 +5,20 @@ import os
 import sys
 import spectroscope
 import toml
-
+import asyncio
 from click_default_group import DefaultGroup
 from ethereumapis.v1alpha1 import beacon_chain_pb2_grpc
+from ethereumapis.v1alpha1 import validator_pb2_grpc
 from pkg_resources import load_entry_point
 from spectroscope.beacon_client import BeaconChainStreamer
+from spectroscope.validator_client import ValidatorClientStreamer
 from spectroscope.config import DefaultConfigBuilder
 from spectroscope.module import ConfigOption, ENABLED_BY_DEFAULT
+from spectroscope.module import Plugin, Subscriber
+from spectroscope.streaming import SpectroscopeClient
 from typing import List
-
+from spectroscope.exceptions import Invalid,ValidatorInvalid,ValidatorActivated
+from functools import wraps
 # System modules should be considered separate; they are for configuration purposes only.
 SYSTEM_MODULES: List[str] = ["spectroscope"]
 
@@ -22,6 +27,13 @@ DEFAULT_CONFIG_PATH: str = "config.toml"
 
 log = spectroscope.log()
 
+
+def coro(f):
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        return asyncio.run(f(*args, **kwargs))
+
+    return wrapper
 
 @click.group(cls=DefaultGroup, default="run", default_if_no_args=True)
 def cli():
@@ -41,7 +53,8 @@ def cli():
     default=DEFAULT_CONFIG_PATH,
     help="Config file path",
 )
-def run(config_file: click.utils.LazyFile):
+@coro
+async def run(config_file: click.utils.LazyFile):
     """Run the Spectroscope monitoring agent."""
 
     log.info("Spectroscope starting up")
@@ -62,6 +75,7 @@ def run(config_file: click.utils.LazyFile):
     log.info("Found {} unique validator keys to watch".format(len(validator_set)))
 
     modules = list()
+    special_module = tuple()
     for module, config in config_root.items():
         if module not in SYSTEM_MODULES and config.get("enabled", False):
             try:
@@ -69,15 +83,22 @@ def run(config_file: click.utils.LazyFile):
                 m = load_entry_point("spectroscope", "spectroscope.module", module)
             except ImportError:
                 raise click.ClickException("Couldn't import module {}".format(module))
+            if module == "activation_alert": 
+                special_module = (m,config)
             modules.append((m, config))
     log.info("Loaded {} modules".format(len(modules)))
-
     log.info("Opening gRPC channel")
-    with grpc.insecure_channel(grpc_endpoint) as channel:
-        stub = beacon_chain_pb2_grpc.BeaconChainStub(channel)
-        bw = BeaconChainStreamer(stub, modules)
-        bw.add_validators(set(map(bytes.fromhex, validator_set)))
-        bw.stream()
+    
+    async with grpc.aio.insecure_channel(grpc_endpoint) as channel:
+        validator_stub = validator_pb2_grpc.BeaconNodeValidatorStub(channel)
+        beacon_stub = beacon_chain_pb2_grpc.BeaconChainStub(channel)
+        vw = ValidatorClientStreamer(validator_stub, [x for x in modules if x == special_module or issubclass(x[0],Plugin)])
+        bw = BeaconChainStreamer(beacon_stub, [x for x in modules if x[0] not in special_module])
+        
+        client = SpectroscopeClient(vw,bw,validator_set)
+        client.setup()
+        await client.loop()
+        
 
 
 @cli.command()

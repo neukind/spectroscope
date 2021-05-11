@@ -40,9 +40,13 @@ class BeaconChainStreamer:
             else:
                 raise TypeError
 
+    def count_validators(self):
+        return len(self.validator_set)
+
     def add_validators(self, validators: Set[bytes]):
         for validator in validators:
-            self.validator_set.add(validator)
+            if validator not in self.validator_set:
+                self.validator_set.add(validator)
 
     def remove_validators(self, validators: Set[bytes]):
         for validator in validators:
@@ -55,36 +59,36 @@ class BeaconChainStreamer:
             public_keys=self.validator_set,
         )
 
-    def stream_responses(self, stream):
-        for validator_info in stream:
-            log.debug(
-                "Received update for validator idx {}".format(validator_info.index)
-            )
-            updates = [
-                ValidatorStatusUpdate(status=validator_info.status),
-                ValidatorBalanceUpdate(
-                    balance=validator_info.balance,
-                    effectiveBalance=validator_info.effective_balance,
+    def stream_responses(self, validator_info):
+        log.debug(
+            "Received update for validator idx {}".format(validator_info.index)
+        )
+        updates = [
+            ValidatorStatusUpdate(status=validator_info.status),
+            ValidatorBalanceUpdate(
+                balance=validator_info.balance,
+                effectiveBalance=validator_info.effective_balance,
+            ),
+        ]
+
+        responses = list()
+        for subscriber in self.subscribers:
+            batch = UpdateBatch(
+                validator=ValidatorIdentity(
+                    pubkey=validator_info.public_key, idx=validator_info.index
                 ),
-            ]
+                timestamp=ChainTimestamp(epoch=validator_info.epoch, slot=0),
+                updates=list(
+                    filter(lambda x: type(x) in subscriber.consumed_types, updates)
+                ),
+            )
+            responses.extend(subscriber.consume(batch))
 
-            responses = list()
-            for subscriber in self.subscribers:
-                batch = UpdateBatch(
-                    validator=ValidatorIdentity(
-                        pubkey=validator_info.public_key, idx=validator_info.index
-                    ),
-                    timestamp=ChainTimestamp(epoch=validator_info.epoch, slot=0),
-                    updates=list(
-                        filter(lambda x: type(x) in subscriber.consumed_types, updates)
-                    ),
-                )
-                responses.extend(subscriber.consume(batch))
+        for plugin in self.plugins:
+            plugin.consume(
+                list(filter(lambda x: type(x) in plugin.consumed_types, responses))
+            )
 
-            for plugin in self.plugins:
-                plugin.consume(
-                    list(filter(lambda x: type(x) in plugin.consumed_types, responses))
-                )
-
-    def stream(self):
-        self.stream_responses(self.stub.StreamValidatorsInfo(self._generate_messages()))
+    async def stream(self):
+        async for stream_value in self.stub.StreamValidatorsInfo(self._generate_messages()).__aiter__():
+            self.stream_responses(stream_value)
