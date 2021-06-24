@@ -8,6 +8,7 @@ setuptools.setup(
         "click-default-group>=1.2.2",
         "ethereumapis>=0.12.0",
         "grpcio>=1.34.0",
+        "grpcio-tools>=1.34.0",
         "pydantic>=1.7.3",
         "toml>=0.10.2",
     ],
