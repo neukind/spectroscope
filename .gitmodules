@@ -1,4 +1,4 @@
 
 [submodule "include"]
-	path = include
+	path = include/spectroscope-proto
 	url = https://github.com/HikaruG/spectroscope-proto
