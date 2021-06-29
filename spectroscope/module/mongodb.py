@@ -1,10 +1,12 @@
 from enum import Enum
+
+from pymongo.operations import DeleteOne
 from spectroscope.model.update import Update, Action, RaiseUpdate, DatabaseBatch
 from spectroscope.module import ConfigOption, Plugin
 from spectroscope.constants import enums
 import spectroscope
 from typing import List
-from pymongo import MongoClient
+from pymongo import MongoClient, UpdateOne
 from pymongo.errors import ConnectionFailure
 log = spectroscope.log()
 import datetime
@@ -52,30 +54,44 @@ class Mongodb(Plugin):
             col_name=kwargs.get("col_name", "validators"),
         )
 
-    def _create_docs(self,validator_keys: List[str],status: int):
-        docs = []
+    def _create_updates(self,validator_keys: List[str],status: int):
+        request = []
         for key in validator_keys:
-            docs.append(
-                {
-                    'validator_key':key,
-                    'status':status
-                }
+            request.append(
+                UpdateOne(
+                    {"validator_key":key},
+                    {"$setOnInsert":{
+                        "validator_key":key,
+                        "status":status
+                        }
+                    },
+                    upsert=True,
+                )
             )
-        return docs
-        
+        return request
+
+    def _create_deletions(self,validator_keys: List[str]):
+        request = []
+        for key in validator_keys:
+            request.append(
+                DeleteOne(
+                    {"validator_key":key}
+                )
+            )
+        return request
+
     def _add(self, validator_keys: List[str],status: int):
         log.debug("trying to put these validator keys:{}".format(validator_keys))
-        docs = self._create_docs(validator_keys,status)
-        self._collection.insert_many(docs)
+        docs = self._create_updates(validator_keys,status)
+        self._collection.bulk_write(docs)
 
     def _del(self, validator_keys: List[str],status: int):
-        self._collection.delete_many({"validator_key":{"$in":validator_keys}})
+        docs = self._create_deletions(validator_keys)
+        self._collection.bulk_write(docs)
 
     def _up(self, validator_keys: List[str], status: int):
-        self._collection.update_many(
-            {"validator_key":{"$in":validator_keys}},
-            {"$set":{"status":status}}
-        )
+        docs = self._create_updates(validator_keys,status)
+        self._collection.bulk_write(docs)
 
     def _action(self,validator_keys: List[str], status: int, update_type:int, **kwargs):
         if enums.ActionTypes.ADD.value == update_type:
