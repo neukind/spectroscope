@@ -40,6 +40,7 @@ class ValidatorClientStreamer:
             else:
                 raise TypeError
 
+
     def count_validators(self):
         return len(self.validator_set)
 
@@ -78,7 +79,8 @@ class ValidatorClientStreamer:
                         filter(lambda x: type(x) in subscriber.consumed_types, updates)
                     ),
                 )
-                responses.extend((subscriber.consume(batch)))
+                if batch.updates:
+                    responses.extend((subscriber.consume(batch)))
             
             for plugin in self.plugins:
                 plugin.consume(

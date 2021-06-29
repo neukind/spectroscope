@@ -104,16 +104,21 @@ async def run(config_file: click.utils.LazyFile, server_host: click.STRING, serv
             if module == "activation_alert": 
                 special_module = (m,config)
             modules.append((m, config))
+            log.info("Loaded {} with config {}".format(m,config))
+            log.info("type :{}".format(type(m)))
+
+
     log.info("Loaded {} modules".format(len(modules)))
+    
     log.info("Opening gRPC channel")
     
     async with grpc.aio.insecure_channel(grpc_endpoint) as channel:
         validator_stub = validator_pb2_grpc.BeaconNodeValidatorStub(channel)
         beacon_stub = beacon_chain_pb2_grpc.BeaconChainStub(channel)
-        val_streamer = ValidatorClientStreamer(validator_stub, [x for x in modules if x == special_module or issubclass(x[0],Plugin)])
+        val_streamer = ValidatorClientStreamer(validator_stub, [x for x in modules])
         #beacon_streamer = BeaconChainStreamer(beacon_stub, [x for x in modules if x[0] not in special_module])
         beacon_streamer = BeaconChainStreamer(beacon_stub, [x for x in modules])
-        spectro_server = SpectroscopeServer(server_host,server_port,[x for x in modules if x[0] not in special_module])
+        spectro_server = SpectroscopeServer(server_host,server_port,[x for x in modules])
         streamer = StreamingClient(val_streamer,beacon_streamer,spectro_server,validator_set)
         streamer.setup()
         await streamer.loop()

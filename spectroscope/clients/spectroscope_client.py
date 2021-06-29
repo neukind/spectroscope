@@ -30,4 +30,3 @@ class SpectroscopeServer:
 
   async def serve(self):
     await self.server.start()
-    await self.server.wait_for_termination()

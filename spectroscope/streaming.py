@@ -31,11 +31,10 @@ class StreamingClient:
     ):
         self.validatorstream = validatorstream
         self.beaconstream = beaconstream
+        self.rpcserver = rpcserver
         self.unactive_validators = unactive_validators
         if active_validators is None:
             self.active_validators = []
-        if rpcserver is None:
-            self.rpcserver = False
         
 
     def setup(self):
@@ -49,6 +48,7 @@ class StreamingClient:
                 asyncio.create_task(i.stream()) for i in [self.validatorstream,self.beaconstream] if i.count_validators() 
                 #asyncio.create_task(self.rpcserver.serve())
             ]
+            tasks.append(asyncio.create_task(self.rpcserver.serve()))
             if not tasks:
                 return 
 

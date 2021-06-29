@@ -1,5 +1,5 @@
 from enum import Enum
-from spectroscope.model.update import Update, Action, RaiseUpdate, UpdateDatabase
+from spectroscope.model.update import Update, Action, RaiseUpdate, DatabaseBatch
 from spectroscope.module import ConfigOption, Plugin
 from spectroscope.constants import enums
 import spectroscope
@@ -9,8 +9,11 @@ from pymongo.errors import ConnectionFailure
 log = spectroscope.log()
 import datetime
 
-
+import spectroscope
+log = spectroscope.log()
 class Mongodb(Plugin):
+    _consumed_types = [RaiseUpdate]
+
     config_options = [
         ConfigOption(
             name="uri_endpoint",
@@ -44,31 +47,33 @@ class Mongodb(Plugin):
     @classmethod
     def register(cls, **kwargs):
         return cls(
+            uri_endpoint=kwargs["uri_endpoint"],
             db_name=kwargs.get("db_name", "spectroscope"),
             col_name=kwargs.get("col_name", "validators"),
         )
 
-    def _create_docs(validator_keys: List[str],status: int):
+    def _create_docs(self,validator_keys: List[str],status: int):
         docs = []
         for key in validator_keys:
             docs.append(
                 {
-                    'validatorkey':key,
+                    'validator_key':key,
                     'status':status
                 }
             )
         return docs
         
     def _add(self, validator_keys: List[str],status: int):
+        log.debug("trying to put these validator keys:{}".format(validator_keys))
         docs = self._create_docs(validator_keys,status)
         self._collection.insert_many(docs)
 
     def _del(self, validator_keys: List[str],status: int):
-        self._collection.delete_many({"validatorKey":{"$in":validator_keys}})
+        self._collection.delete_many({"validator_key":{"$in":validator_keys}})
 
     def _up(self, validator_keys: List[str], status: int):
         self._collection.update_many(
-            {"validatorKey":{"$in":validator_keys}},
+            {"validator_key":{"$in":validator_keys}},
             {"$set":{"status":status}}
         )
 
@@ -81,5 +86,6 @@ class Mongodb(Plugin):
             self._del(validator_keys,status)
 
     def consume(self,events: List[Action]):
+        log.debug("arrived here...")
         for event in events:
-            self._handlers[type(event)](**event)
+            self._handlers[type(event)](**event.update.get_dict())
