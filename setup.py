@@ -16,15 +16,18 @@ setuptools.setup(
         "alerta": ["alerta>=8.2.0"],
         "webhook": ["requests>=2.7.0"],
         "zenduty": ["zenduty-api>=0.2"],
+        "pymongo": ["pymongo>=3.11.4"]
     },
     python_requires=">=3.6",
     entry_points={
         "console_scripts": ["spectroscope = spectroscope.app:cli"],
         "spectroscope.module": [
+            "activation_alert = spectroscope.module.activation_alert:ActivationAlert",
             "alerta = spectroscope.module.alerta:Alerta",
             "balance_alert = spectroscope.module.balance_alert:BalanceAlert",
+            "db_update = spectroscope.module.db_update:DbUpdate",
+            "mongodb = spectroscope.module.mongodb:Mongodb",
             "status_alert = spectroscope.module.status_alert:StatusAlert",
-            "activation_alert = spectroscope.module.activation_alert:ActivationAlert",
             "webhook = spectroscope.module.webhook:Webhook",
             "zenduty = spectroscope.module.zenduty:Zenduty",
         ],

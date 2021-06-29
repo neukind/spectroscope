@@ -10,12 +10,13 @@ from click_default_group import DefaultGroup
 from ethereumapis.v1alpha1 import beacon_chain_pb2_grpc
 from ethereumapis.v1alpha1 import validator_pb2_grpc
 from pkg_resources import load_entry_point
-from spectroscope.beacon_client import BeaconChainStreamer
-from spectroscope.validator_client import ValidatorClientStreamer
+from spectroscope.clients.beacon_client import BeaconChainStreamer
+from spectroscope.clients.validator_client import ValidatorClientStreamer
+from spectroscope.clients.spectroscope_client import SpectroscopeServer
 from spectroscope.config import DefaultConfigBuilder
 from spectroscope.module import ConfigOption, ENABLED_BY_DEFAULT
 from spectroscope.module import Plugin, Subscriber
-from spectroscope.streaming import SpectroscopeClient
+from spectroscope.streaming import StreamingClient
 from typing import List
 from spectroscope.exceptions import Invalid,ValidatorInvalid,ValidatorActivated
 from functools import wraps
@@ -51,10 +52,27 @@ def cli():
     "config_file",
     type=click.File("r"),
     default=DEFAULT_CONFIG_PATH,
-    help="Config file path",
+    help="Config file path, ([::])",
 )
+
+@click.option(
+    "--host",
+    "server_host",
+    type=click.STRING,
+    default="[::]",
+    help="server host ip (51001)",
+)
+
+@click.option(
+    "--port",
+    "server_port",
+    type=click.INT,
+    default=50051,
+    help="server port number",
+)
+
 @coro
-async def run(config_file: click.utils.LazyFile):
+async def run(config_file: click.utils.LazyFile, server_host: click.STRING, server_port: click.INT):
     """Run the Spectroscope monitoring agent."""
 
     log.info("Spectroscope starting up")
@@ -92,12 +110,13 @@ async def run(config_file: click.utils.LazyFile):
     async with grpc.aio.insecure_channel(grpc_endpoint) as channel:
         validator_stub = validator_pb2_grpc.BeaconNodeValidatorStub(channel)
         beacon_stub = beacon_chain_pb2_grpc.BeaconChainStub(channel)
-        vw = ValidatorClientStreamer(validator_stub, [x for x in modules if x == special_module or issubclass(x[0],Plugin)])
-        bw = BeaconChainStreamer(beacon_stub, [x for x in modules if x[0] not in special_module])
-        
-        client = SpectroscopeClient(vw,bw,validator_set)
-        client.setup()
-        await client.loop()
+        val_streamer = ValidatorClientStreamer(validator_stub, [x for x in modules if x == special_module or issubclass(x[0],Plugin)])
+        #beacon_streamer = BeaconChainStreamer(beacon_stub, [x for x in modules if x[0] not in special_module])
+        beacon_streamer = BeaconChainStreamer(beacon_stub, [x for x in modules])
+        spectro_server = SpectroscopeServer(server_host,server_port,[x for x in modules if x[0] not in special_module])
+        streamer = StreamingClient(val_streamer,beacon_streamer,spectro_server,validator_set)
+        streamer.setup()
+        await streamer.loop()
         
 
 

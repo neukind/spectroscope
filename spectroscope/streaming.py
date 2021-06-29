@@ -7,12 +7,14 @@ from typing import List
 from ethereumapis.v1alpha1 import beacon_chain_pb2_grpc
 from ethereumapis.v1alpha1 import validator_pb2_grpc
 from pkg_resources import load_entry_point
-from spectroscope.beacon_client import BeaconChainStreamer
-from spectroscope.validator_client import ValidatorClientStreamer
+from spectroscope.clients.beacon_client import BeaconChainStreamer
+from spectroscope.clients.validator_client import ValidatorClientStreamer
+from spectroscope.clients.spectroscope_client import SpectroscopeServer
+
 from spectroscope.exceptions import Invalid,ValidatorInvalid,ValidatorActivated
 
 
-class SpectroscopeClient:
+class StreamingClient:
     """ Handles all the spectroscope app's features
 
     Args:
@@ -22,8 +24,9 @@ class SpectroscopeClient:
     def __init__(self,
         validatorstream: ValidatorClientStreamer,
         beaconstream: BeaconChainStreamer,
+        rpcserver: SpectroscopeServer,
         unactive_validators: List[bytes],
-        active_validators: List[bytes]=None
+        active_validators: List[bytes]=None,
         #the server that will handle user requests, 
     ):
         self.validatorstream = validatorstream
@@ -31,6 +34,8 @@ class SpectroscopeClient:
         self.unactive_validators = unactive_validators
         if active_validators is None:
             self.active_validators = []
+        if rpcserver is None:
+            self.rpcserver = False
         
 
     def setup(self):
@@ -41,7 +46,8 @@ class SpectroscopeClient:
     async def loop(self):
         while True:
             tasks = [
-                asyncio.ensure_future(i.stream()) for i in [self.validatorstream,self.beaconstream] if i.count_validators()
+                asyncio.create_task(i.stream()) for i in [self.validatorstream,self.beaconstream] if i.count_validators() 
+                #asyncio.create_task(self.rpcserver.serve())
             ]
             if not tasks:
                 return 
