@@ -1,12 +1,12 @@
 from enum import Enum
 
-from pymongo.operations import DeleteOne
-from spectroscope.model.update import Update, Action, RaiseUpdate, DatabaseBatch
+from spectroscope.model.update import Action
+from spectroscope.model.database import RaiseUpdateKeys
 from spectroscope.module import ConfigOption, Plugin
 from spectroscope.constants import enums
 import spectroscope
 from typing import List
-from pymongo import MongoClient, UpdateOne
+from pymongo import MongoClient, UpdateOne,DeleteOne
 from pymongo.errors import ConnectionFailure
 log = spectroscope.log()
 import datetime
@@ -14,7 +14,7 @@ import datetime
 import spectroscope
 log = spectroscope.log()
 class Mongodb(Plugin):
-    _consumed_types = [RaiseUpdate]
+    _consumed_types = [RaiseUpdateKeys]
 
     config_options = [
         ConfigOption(
@@ -43,7 +43,7 @@ class Mongodb(Plugin):
             log.error("failed to connect to {}. {}".format(self.uri_endpoint, e))
             raise e
         self._handlers = {
-            RaiseUpdate: self._action
+            RaiseUpdateKeys: self._action
         }
 
     @classmethod

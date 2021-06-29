@@ -1,9 +1,11 @@
-from spectroscope.model.update import DatabaseUpdate, Update, DatabaseBatch, Action, RaiseUpdate
+from spectroscope.model.update import DatabaseBatch, Action, DatabaseUpdate
+from spectroscope.model.database import Database, DatabaseAction, RaiseUpdateKeys
 from spectroscope.module import Subscriber
 from typing import Dict, List, Set
+from spectroscope.constants import enums
 
 
-class UpdateKey(DatabaseUpdate):
+class UpdateKey(Database):
     pass
 
 class DbUpdate(Subscriber):
@@ -20,9 +22,10 @@ class DbUpdate(Subscriber):
 
     def consume(self, batch: DatabaseBatch) -> List[Action]:
         ret: List[Action] = list()
+        status = 0
         for update in batch.updates:
             ret.append(
-                RaiseUpdate(
+                RaiseUpdateKeys(
                     update = UpdateKey(
                         validator_keys = update.validator_keys,
                         status = update.status,

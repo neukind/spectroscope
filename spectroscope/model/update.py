@@ -7,25 +7,8 @@ import datetime
 
 class Update(Event):
     pass
-class DatabaseUpdate(Update):
-    update_type: int
-    validator_keys: List[str]
-    status: int
-    def get_dict(self):
-        vals = dict()
-        vals['update_type'] = self.update_type
-        vals['validator_keys'] = self.validator_keys
-        vals['status'] = self.status
-        return vals
-class DatabaseAction(Action):
-    update: DatabaseUpdate
-    def __init__(self, update: DatabaseUpdate):
-        super().__init__(update=update)
-class RaiseUpdate(DatabaseAction):
-    pass
 class ValidatorStatusUpdate(Update):
     status: int
-
 
 class ValidatorBalanceUpdate(Update):
     balance: int
@@ -33,6 +16,10 @@ class ValidatorBalanceUpdate(Update):
 class ValidatorActivationUpdate(Update):
     status: int
 
+class DatabaseUpdate(Update):
+    status: int
+    update_type: int
+    validator_keys: List[str]
 class ActivationBatch(BaseModel):
     validator: ValidatorIdentity
     activation_epoch: int
@@ -44,4 +31,4 @@ class UpdateBatch(BaseModel):
     updates: List[Update]
 
 class DatabaseBatch(BaseModel):
-    updates: List[DatabaseUpdate]
+    updates: List[Update]

@@ -1,14 +1,8 @@
-from spectroscope.model import update
 from spectroscope.model.update import DatabaseBatch, DatabaseUpdate
 import spectroscope
-from spectroscope.exceptions import Interrupt, UserInteraction
 from spectroscope.module import Module, Plugin, Subscriber
-from spectroscope.module import db_update
 from spectroscope.constants import enums
 from typing import List, Set, Tuple, Type
-import asyncio
-import grpc
-from concurrent import futures
 from proto_files.validator import service_pb2, service_pb2_grpc
 
 #This servicer will take the module necessary to work: 
@@ -34,31 +28,30 @@ class RPCValidatorServicer(service_pb2_grpc.ValidatorServiceServicer):
         updates = [
             DatabaseUpdate(
                 update_type = enums.ActionTypes.ADD.value,
-                status = 0,
-                validator_keys = [val.validator_key for val in request.validators.validator]
-            )
+                status = enums.ValidatorStatus.DEPOSITED.value,
+                validator_keys= [val.validator_key for val in request.validators.validator]
+                )
         ]
         return self._send_requests(updates)
         
     def UpNodes(self, request, context):
-        updates = list(
+        updates = [
             DatabaseUpdate(
                 update_type = enums.ActionTypes.UP.value,
                 status = request.status,
-                validator_keys = [val.validator_key for val in request.validators.validator],
-            )
-        )
+                validator_keys= [val.validator_key for val in request.validators.validator]
+                )
+        ]
         return self._send_requests(updates)
 
     def DelNodes(self, request, context):
-        updates = list(
+        updates = [
             DatabaseUpdate(
                 update_type = enums.ActionTypes.DEL.value,
-                status = -1,
-                validator_keys = [val.validator_key for val in request.validators.validator],
-            )
-        )
-        
+                status = enums.ValidatorStatus.ACTIVE.value,
+                validator_keys= [val.validator_key for val in request.validators.validator]
+                )
+        ]
         return self._send_requests(updates)
 
     def _send_requests(self, updates):
