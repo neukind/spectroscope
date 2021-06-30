@@ -83,9 +83,9 @@ class ValidatorClientStreamer:
                     responses.extend((subscriber.consume(batch)))
             
             for plugin in self.plugins:
-                plugin.consume(
-                    list(filter(lambda x: type(x) in plugin.consumed_types, responses))
-                )
+                actions = list(filter(lambda x: type(x) in plugin.consumed_types, responses))
+                if actions:
+                    plugin.consume(actions)
             
             if validator_info.status.status == validator_pb2._VALIDATORSTATUS.values_by_name["ACTIVE"].number:
                 av.append(validator_info.public_key)

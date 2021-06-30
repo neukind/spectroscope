@@ -63,20 +63,29 @@ class RPCValidatorServicer(service_pb2_grpc.ValidatorServiceServicer):
                     filter(lambda x: type(x) in subscriber.consumed_types, updates)
                 ),
             )
-            log.debug("subscriber {} has {}".format(subscriber,batch.updates))
             if batch.updates:
                 responses.extend(subscriber.consume(batch))
-        log.debug("returned values : {}".format(responses))
-        for plugin in self.plugins:
-            log.debug("plugin {} has".format(plugin))
-            debug_filter = list(filter(lambda x: type(x) in plugin.consumed_types, responses))
-            log.debug("{}".format(str(debug_filter)))
-            plugin.consume(
-                list(filter(lambda x: type(x) in plugin.consumed_types, responses))
-            )
-        response = service_pb2.RequestAccepted(
-            status = "Accepted"
-        )
-        return response
 
-    
+        api_results = []
+        for plugin in self.plugins:
+            actions = list(filter(lambda x: type(x) in plugin.consumed_types, responses))
+            if actions:
+                api_results = plugin.consume(actions)
+
+        return self._return_api(api_results)
+
+    def _return_api(self, api_results):
+        upserted_count = 0
+        for api_result in api_results:
+            if api_result is not None:
+                if api_result.acknowledged:
+                    upserted_count += api_result.upserted_count
+                else:
+                    return service_pb2.RequestsResult(status=400, message="failed to upsert at least one key")
+        response = service_pb2.RequestsResult(status=200)
+        if upserted_count:
+            message  = "Upserted {} keys".format(upserted_count)
+            response.message = message
+        else:
+            response.message = "All the keys were already stored"
+        return response

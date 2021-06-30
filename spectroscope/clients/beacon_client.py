@@ -86,9 +86,9 @@ class BeaconChainStreamer:
                 responses.extend(subscriber.consume(batch))
 
         for plugin in self.plugins:
-            plugin.consume(
-                list(filter(lambda x: type(x) in plugin.consumed_types, responses))
-            )
+            actions = list(filter(lambda x: type(x) in plugin.consumed_types, responses))
+            if actions:
+                plugin.consume(actions)
 
     async def stream(self):
         async for stream_value in self.stub.StreamValidatorsInfo(self._generate_messages()).__aiter__():

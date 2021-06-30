@@ -9,7 +9,6 @@ from typing import List
 from pymongo import MongoClient, UpdateOne,DeleteOne
 from pymongo.errors import ConnectionFailure
 log = spectroscope.log()
-import datetime
 
 import spectroscope
 log = spectroscope.log()
@@ -83,25 +82,28 @@ class Mongodb(Plugin):
     def _add(self, validator_keys: List[str],status: int):
         log.debug("trying to put these validator keys:{}".format(validator_keys))
         docs = self._create_updates(validator_keys,status)
-        self._collection.bulk_write(docs)
+        return self._collection.bulk_write(docs)
 
     def _del(self, validator_keys: List[str],status: int):
         docs = self._create_deletions(validator_keys)
-        self._collection.bulk_write(docs)
+        return self._collection.bulk_write(docs)
 
     def _up(self, validator_keys: List[str], status: int):
         docs = self._create_updates(validator_keys,status)
-        self._collection.bulk_write(docs)
+        return self._collection.bulk_write(docs)
 
     def _action(self,validator_keys: List[str], status: int, update_type:int, **kwargs):
         if enums.ActionTypes.ADD.value == update_type:
-            self._add(validator_keys,status)
+            return self._add(validator_keys,status)
         elif enums.ActionTypes.UP.value == update_type:
-            self._up(validator_keys,status)
+            return self._up(validator_keys,status)
         elif enums.ActionTypes.DEL.value == update_type:
-            self._del(validator_keys,status)
+            return self._del(validator_keys,status)
 
     def consume(self,events: List[Action]):
+        result = []
         log.debug("arrived here...")
         for event in events:
-            self._handlers[type(event)](**event.update.get_dict())
+            result.append(self._handlers[type(event)](**event.update.get_dict()))
+        log.debug("this is the result of the request :{}".format(result))
+        return result
