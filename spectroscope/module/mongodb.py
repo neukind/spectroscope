@@ -7,6 +7,7 @@ from spectroscope.constants import enums
 import spectroscope
 from typing import List
 from pymongo import MongoClient, UpdateOne,DeleteOne
+from pymongo.results import BulkWriteResult
 from pymongo.errors import ConnectionFailure
 log = spectroscope.log()
 
@@ -80,17 +81,22 @@ class Mongodb(Plugin):
         return request
 
     def _add(self, validator_keys: List[str],status: int):
-        log.debug("trying to put these validator keys:{}".format(validator_keys))
-        docs = self._create_updates(validator_keys,status)
-        return self._collection.bulk_write(docs)
-
-    def _del(self, validator_keys: List[str],status: int):
-        docs = self._create_deletions(validator_keys)
-        return self._collection.bulk_write(docs)
+        return self._response(self._collection.bulk_write(self._create_updates(validator_keys,status), ordered=False))
 
     def _up(self, validator_keys: List[str], status: int):
-        docs = self._create_updates(validator_keys,status)
-        return self._collection.bulk_write(docs)
+        return self._response(self._collection.bulk_write(self._create_updates(validator_keys,status), ordered=False))
+ 
+    def _del(self, validator_keys: List[str],status: int):
+        return self._collection.bulk_write(self._create_deletions(validator_keys), ordered=False)
+
+    def _get(self, validator_keys: List[str], status: int):
+        validators=[]
+        if not validator_keys:
+            validators = self._collection.find({},{"validator_key":1})
+        else:
+            validators = self._collection.find({'validator_key':{'$in':validator_keys}},{"validator_key":1})
+        log.debug("docs updated : {}".format(len([x['validator_key'] for x in validators])))
+        return [x['validator_key'] for x in validators]
 
     def _action(self,validator_keys: List[str], status: int, update_type:int, **kwargs):
         if enums.ActionTypes.ADD.value == update_type:
@@ -99,6 +105,13 @@ class Mongodb(Plugin):
             return self._up(validator_keys,status)
         elif enums.ActionTypes.DEL.value == update_type:
             return self._del(validator_keys,status)
+        elif enums.ActionTypes.GET.value == update_type:
+            return self._get(validator_keys,status)
+
+    def _response(self, bulk_response:BulkWriteResult):
+        if not bulk_response.acknowledged:
+            return []
+        return [bulk_response.upserted_count]
 
     def consume(self,events: List[Action]):
         result = []

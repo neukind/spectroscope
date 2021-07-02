@@ -52,6 +52,9 @@ class ValidatorClientStreamer:
         for validator in validators: 
             self.validator_set.remove(validator)
 
+    def update_validators(self, validators: Set[bytes]):
+        self.validator_set = validators
+
     def _generate_messages(self):
         log.info("Watching for {} future validators".format(len(self.validator_set)))
         return validator_pb2.ValidatorActivationRequest(

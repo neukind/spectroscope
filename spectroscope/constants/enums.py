@@ -3,6 +3,7 @@ class ActionTypes(Enum):
         ADD = 1
         UP = 2
         DEL = 3
+        GET = 4
 
 class ValidatorStatus(Enum):
         UNKNOWN_STATUS = 0

@@ -12,7 +12,7 @@ from ethereumapis.v1alpha1 import validator_pb2_grpc
 from pkg_resources import load_entry_point
 from spectroscope.clients.beacon_client import BeaconChainStreamer
 from spectroscope.clients.validator_client import ValidatorClientStreamer
-from spectroscope.clients.spectroscope_client import SpectroscopeServer
+from spectroscope.service.spectroscope_server import SpectroscopeServer
 from spectroscope.config import DefaultConfigBuilder
 from spectroscope.module import ConfigOption, ENABLED_BY_DEFAULT
 from spectroscope.module import Plugin, Subscriber
@@ -101,8 +101,6 @@ async def run(config_file: click.utils.LazyFile, server_host: click.STRING, serv
                 m = load_entry_point("spectroscope", "spectroscope.module", module)
             except ImportError:
                 raise click.ClickException("Couldn't import module {}".format(module))
-            if module == "activation_alert": 
-                special_module = (m,config)
             modules.append((m, config))
             log.info("Loaded {} with config {}".format(m,config))
             log.info("type :{}".format(type(m)))
@@ -112,11 +110,11 @@ async def run(config_file: click.utils.LazyFile, server_host: click.STRING, serv
     
     log.info("Opening gRPC channel")
     
+    
     async with grpc.aio.insecure_channel(grpc_endpoint) as channel:
         validator_stub = validator_pb2_grpc.BeaconNodeValidatorStub(channel)
         beacon_stub = beacon_chain_pb2_grpc.BeaconChainStub(channel)
         val_streamer = ValidatorClientStreamer(validator_stub, [x for x in modules])
-        #beacon_streamer = BeaconChainStreamer(beacon_stub, [x for x in modules if x[0] not in special_module])
         beacon_streamer = BeaconChainStreamer(beacon_stub, [x for x in modules])
         spectro_server = SpectroscopeServer(server_host,server_port,[x for x in modules])
         streamer = StreamingClient(val_streamer,beacon_streamer,spectro_server,validator_set)

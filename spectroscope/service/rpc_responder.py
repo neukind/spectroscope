@@ -1,13 +1,16 @@
+from ethereumapis.v1alpha1.validator_pb2 import UNKNOWN_STATUS
 from spectroscope.model.update import DatabaseBatch, DatabaseUpdate
 import spectroscope
+from spectroscope.exceptions import NewKeys, NewValidatorList
 from spectroscope.module import Module, Plugin, Subscriber
 from spectroscope.constants import enums
 from typing import List, Set, Tuple, Type
-from proto_files.validator import service_pb2, service_pb2_grpc
-
+from proto_files.validator import service_pb2, node_pb2, service_pb2_grpc
+import json
 #This servicer will take the module necessary to work: 
 # The database plugin used: For now we are using mongodb
 # The db_update subscriber that listens to DatabaseBatch Updates.
+
 log = spectroscope.log()
 class RPCValidatorServicer(service_pb2_grpc.ValidatorServiceServicer):
     def __init__(
@@ -23,7 +26,7 @@ class RPCValidatorServicer(service_pb2_grpc.ValidatorServiceServicer):
                 self.plugins.append(module.register(**config))
             else:
                 raise TypeError
-    
+
     def AddNodes(self,request,context):
         updates = [
             DatabaseUpdate(
@@ -32,8 +35,24 @@ class RPCValidatorServicer(service_pb2_grpc.ValidatorServiceServicer):
                 validator_keys= [val.validator_key for val in request.validators.validator]
                 )
         ]
-        return self._send_requests(updates)
-        
+        return self._return_api(self._send_requests(updates))
+    
+        response = service_pb2.RequestsResult()
+    
+        try:
+            upserted_val = [upserted_val + x for result in result_api for x in result][0]
+            if upserted_val:
+                response.status = 200
+                log.debug("ok, should be raising exception {}".format(upserted_val))
+                raise NewValidatorList(upserted_val)
+            else:
+                response.status = 202
+                pass        
+        finally:
+            response.count = upserted_val
+            return response 
+
+
     def UpNodes(self, request, context):
         updates = [
             DatabaseUpdate(
@@ -42,7 +61,7 @@ class RPCValidatorServicer(service_pb2_grpc.ValidatorServiceServicer):
                 validator_keys= [val.validator_key for val in request.validators.validator]
                 )
         ]
-        return self._send_requests(updates)
+        return self._return_api(self._send_requests(updates))
 
     def DelNodes(self, request, context):
         updates = [
@@ -52,7 +71,18 @@ class RPCValidatorServicer(service_pb2_grpc.ValidatorServiceServicer):
                 validator_keys= [val.validator_key for val in request.validators.validator]
                 )
         ]
-        return self._send_requests(updates)
+        return self._return_api(self._send_requests(updates))
+        
+    def GetNodes(self, request,context):
+        updates = [
+            DatabaseUpdate(
+                status = enums.ValidatorStatus.UNKNOWN_STATUS.value,
+                update_type = enums.ActionTypes.GET.value,
+                validator_keys = [val.validator_key for val in request.validators.validator]
+                )
+        ]
+        return self._return_get(self._send_requests(updates))
+
 
     def _send_requests(self, updates):
         log.debug('received these updates {}'.format(updates))
@@ -71,21 +101,35 @@ class RPCValidatorServicer(service_pb2_grpc.ValidatorServiceServicer):
             actions = list(filter(lambda x: type(x) in plugin.consumed_types, responses))
             if actions:
                 api_results = plugin.consume(actions)
+        return api_results
 
-        return self._return_api(api_results)
+    def _return_api(self, result_api):
+        response = service_pb2.RequestsResult()
+        upserted_val = 0
+        log.debug("im in the return api")
 
-    def _return_api(self, api_results):
-        upserted_count = 0
-        for api_result in api_results:
-            if api_result is not None:
-                if api_result.acknowledged:
-                    upserted_count += api_result.upserted_count
-                else:
-                    return service_pb2.RequestsResult(status=400, message="failed to upsert at least one key")
-        response = service_pb2.RequestsResult(status=200)
-        if upserted_count:
-            message  = "Upserted {} keys".format(upserted_count)
-            response.message = message
-        else:
-            response.message = "All the keys were already stored"
+        try:
+            upserted_val = [upserted_val + x for result in result_api for x in result][0]
+            if upserted_val:
+                response.status = 200
+                log.debug("ok, should be raising exception {}".format(upserted_val))
+                raise NewValidatorList(upserted_val)
+            else:
+                response.status = 202
+                pass        
+        finally:
+            response.count = upserted_val
+            return response 
+
+    def _return_get(self,result_api):
+        response = service_pb2.ValidatorList()
+        validator_list = [node_pb2.Validator(validator_key=val.encode()) for result in result_api for val in result]
+        for val in validator_list:
+            response.validator.append(val)
         return response
+
+    def get_validators(self):
+        request = service_pb2.GetNodesRequest(
+            validators = []
+        )
+        return self.GetNodes(request,None)

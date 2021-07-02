@@ -9,13 +9,17 @@ class ValidatorInvalid(Invalid):
         self.expression = expression 
         self.message = message
 
-class ValidatorActivated(Invalid):
+class ValidatorActivated(Interrupt):
     def __init__(self,activated_keys):
         self.activated_keys: list() = activated_keys
     def get_keys(self):
         return self.activated_keys
 
-class UserInteraction(Interrupt):
-    def __init__(self):
-        pass
-    
+class NewValidatorList(Interrupt):
+    def __init__(self,val_count):
+        self.val_count: int = val_count
+    def need_update(self):
+        return self.val_count
+
+class NewKeys(NewValidatorList):
+    pass

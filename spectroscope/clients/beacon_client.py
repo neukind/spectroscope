@@ -52,6 +52,9 @@ class BeaconChainStreamer:
         for validator in validators:
             self.validator_set.remove(validator)
 
+    def update_validators(self, validators: Set[bytes]):
+        self.validator_set = validators
+        
     def _generate_messages(self):
         log.info("Watching for {} validators".format(len(self.validator_set)))
         yield beacon_chain_pb2.ValidatorChangeSet(
