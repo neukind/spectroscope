@@ -36,7 +36,7 @@ class Mongodb(Plugin):
 
     def __init__(self, uri_endpoint: str, db_name: str, col_name: str):
         try:
-            self._client = MongoClient(uri_endpoint)
+            self._client = MongoClient(uri_endpoint,replicaset="rs0")
             self._database = self._client[db_name]
             self._collection = self._database[col_name]
         except ConnectionFailure as e:
@@ -99,13 +99,13 @@ class Mongodb(Plugin):
         return [x['validator_key'] for x in validators]
 
     def _action(self,validator_keys: List[str], status: int, update_type:int, **kwargs):
-        if enums.ActionTypes.ADD.value == update_type:
+        if enums.RequestTypes.ADD.value == update_type:
             return self._add(validator_keys,status)
-        elif enums.ActionTypes.UP.value == update_type:
+        elif enums.RequestTypes.UP.value == update_type:
             return self._up(validator_keys,status)
-        elif enums.ActionTypes.DEL.value == update_type:
+        elif enums.RequestTypes.DEL.value == update_type:
             return self._del(validator_keys,status)
-        elif enums.ActionTypes.GET.value == update_type:
+        elif enums.RequestTypes.GET.value == update_type:
             return self._get(validator_keys,status)
 
     def _response(self, bulk_response:BulkWriteResult):

@@ -6,6 +6,7 @@ import sys
 import spectroscope
 import toml
 import asyncio
+from motor import motor_asyncio
 from click_default_group import DefaultGroup
 from ethereumapis.v1alpha1 import beacon_chain_pb2_grpc
 from ethereumapis.v1alpha1 import validator_pb2_grpc
@@ -13,6 +14,8 @@ from pkg_resources import load_entry_point
 from spectroscope.clients.beacon_client import BeaconChainStreamer
 from spectroscope.clients.validator_client import ValidatorClientStreamer
 from spectroscope.service.spectroscope_server import SpectroscopeServer
+from spectroscope.clients.mongodb_client import MongodbClientStreamer
+
 from spectroscope.config import DefaultConfigBuilder
 from spectroscope.module import ConfigOption, ENABLED_BY_DEFAULT
 from spectroscope.module import Plugin, Subscriber
@@ -93,7 +96,6 @@ async def run(config_file: click.utils.LazyFile, server_host: click.STRING, serv
     log.info("Found {} unique validator keys to watch".format(len(validator_set)))
 
     modules = list()
-    special_module = tuple()
     for module, config in config_root.items():
         if module not in SYSTEM_MODULES and config.get("enabled", False):
             try:
@@ -109,18 +111,26 @@ async def run(config_file: click.utils.LazyFile, server_host: click.STRING, serv
     log.info("Loaded {} modules".format(len(modules)))
     
     log.info("Opening gRPC channel")
+    db_uri:str="mongodb://localhost:27017"
+    db_name:str="spectroscope"
+    col_name:str="validators"
+    collection = motor_asyncio.AsyncIOMotorClient(db_uri)[db_name][col_name]
+    pipeline = [{'$match': { '$or': [{'operationType': 'insert'},{'operationType': 'delete'}]}}]
+    async with collection.watch(pipeline) as mongo_stream:
+        mongo_streamer = MongodbClientStreamer(stream=mongo_stream,modules=modules)
+        async with grpc.aio.insecure_channel(grpc_endpoint) as channel:
     
+
+            validator_stub = validator_pb2_grpc.BeaconNodeValidatorStub(channel)
+            beacon_stub = beacon_chain_pb2_grpc.BeaconChainStub(channel)
+            val_streamer = ValidatorClientStreamer(validator_stub, [x for x in modules])
+            beacon_streamer = BeaconChainStreamer(beacon_stub, [x for x in modules])
+
+            spectro_server = SpectroscopeServer(server_host,server_port,[x for x in modules])
+            streamer = StreamingClient(val_streamer,beacon_streamer,mongo_streamer,spectro_server,validator_set)
+            streamer.setup()
+            await streamer.loop()
     
-    async with grpc.aio.insecure_channel(grpc_endpoint) as channel:
-        validator_stub = validator_pb2_grpc.BeaconNodeValidatorStub(channel)
-        beacon_stub = beacon_chain_pb2_grpc.BeaconChainStub(channel)
-        val_streamer = ValidatorClientStreamer(validator_stub, [x for x in modules])
-        beacon_streamer = BeaconChainStreamer(beacon_stub, [x for x in modules])
-        spectro_server = SpectroscopeServer(server_host,server_port,[x for x in modules])
-        streamer = StreamingClient(val_streamer,beacon_streamer,spectro_server,validator_set)
-        streamer.setup()
-        await streamer.loop()
-        
 
 
 @cli.command()

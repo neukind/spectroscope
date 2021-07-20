@@ -1,12 +1,11 @@
 from ethereumapis.v1alpha1.validator_pb2 import UNKNOWN_STATUS
-from spectroscope.model.update import DatabaseBatch, DatabaseUpdate
 import spectroscope
-from spectroscope.exceptions import NewKeys, NewValidatorList
+from spectroscope.model.update import DatabaseBatch, DatabaseUpdate
+from spectroscope.exceptions import NewValidatorList
 from spectroscope.module import Module, Plugin, Subscriber
 from spectroscope.constants import enums
 from typing import List, Set, Tuple, Type
 from proto_files.validator import service_pb2, node_pb2, service_pb2_grpc
-import json
 #This servicer will take the module necessary to work: 
 # The database plugin used: For now we are using mongodb
 # The db_update subscriber that listens to DatabaseBatch Updates.
@@ -30,33 +29,17 @@ class RPCValidatorServicer(service_pb2_grpc.ValidatorServiceServicer):
     def AddNodes(self,request,context):
         updates = [
             DatabaseUpdate(
-                update_type = enums.ActionTypes.ADD.value,
+                update_type = enums.RequestTypes.ADD.value,
                 status = enums.ValidatorStatus.DEPOSITED.value,
                 validator_keys= [val.validator_key for val in request.validators.validator]
                 )
         ]
         return self._return_api(self._send_requests(updates))
-    
-        response = service_pb2.RequestsResult()
-    
-        try:
-            upserted_val = [upserted_val + x for result in result_api for x in result][0]
-            if upserted_val:
-                response.status = 200
-                log.debug("ok, should be raising exception {}".format(upserted_val))
-                raise NewValidatorList(upserted_val)
-            else:
-                response.status = 202
-                pass        
-        finally:
-            response.count = upserted_val
-            return response 
-
-
+        
     def UpNodes(self, request, context):
         updates = [
             DatabaseUpdate(
-                update_type = enums.ActionTypes.UP.value,
+                update_type = enums.RequestTypes.UP.value,
                 status = request.status,
                 validator_keys= [val.validator_key for val in request.validators.validator]
                 )
@@ -66,7 +49,7 @@ class RPCValidatorServicer(service_pb2_grpc.ValidatorServiceServicer):
     def DelNodes(self, request, context):
         updates = [
             DatabaseUpdate(
-                update_type = enums.ActionTypes.DEL.value,
+                update_type = enums.RequestTypes.DEL.value,
                 status = enums.ValidatorStatus.ACTIVE.value,
                 validator_keys= [val.validator_key for val in request.validators.validator]
                 )
@@ -77,7 +60,7 @@ class RPCValidatorServicer(service_pb2_grpc.ValidatorServiceServicer):
         updates = [
             DatabaseUpdate(
                 status = enums.ValidatorStatus.UNKNOWN_STATUS.value,
-                update_type = enums.ActionTypes.GET.value,
+                update_type = enums.RequestTypes.GET.value,
                 validator_keys = [val.validator_key for val in request.validators.validator]
                 )
         ]
@@ -107,16 +90,15 @@ class RPCValidatorServicer(service_pb2_grpc.ValidatorServiceServicer):
         response = service_pb2.RequestsResult()
         upserted_val = 0
         log.debug("im in the return api")
-
         try:
             upserted_val = [upserted_val + x for result in result_api for x in result][0]
+            log.debug("this is the value of upserted :{}".format(upserted_val))
             if upserted_val:
-                response.status = 200
+                response.status = 201
                 log.debug("ok, should be raising exception {}".format(upserted_val))
                 raise NewValidatorList(upserted_val)
             else:
-                response.status = 202
-                pass        
+                response.status = 200 
         finally:
             response.count = upserted_val
             return response 

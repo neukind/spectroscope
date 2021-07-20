@@ -1,9 +1,15 @@
 from enum import Enum
-class ActionTypes(Enum):
+class RequestTypes(Enum):
         ADD = 1
         UP = 2
         DEL = 3
         GET = 4
+
+class ListUpdate(Enum):
+        ADD = 1
+        DEL = 2
+        BOTH = 3
+
 
 class ValidatorStatus(Enum):
         UNKNOWN_STATUS = 0
