@@ -1,7 +1,6 @@
 from ethereumapis.v1alpha1.validator_pb2 import UNKNOWN_STATUS
 import spectroscope
 from spectroscope.model.update import DatabaseBatch, DatabaseUpdate
-from spectroscope.exceptions import NewValidatorList
 from spectroscope.module import Module, Plugin, Subscriber
 from spectroscope.constants import enums
 from typing import List, Set, Tuple, Type
@@ -89,14 +88,10 @@ class RPCValidatorServicer(service_pb2_grpc.ValidatorServiceServicer):
     def _return_api(self, result_api):
         response = service_pb2.RequestsResult()
         upserted_val = 0
-        log.debug("im in the return api")
         try:
             upserted_val = [upserted_val + x for result in result_api for x in result][0]
-            log.debug("this is the value of upserted :{}".format(upserted_val))
             if upserted_val:
                 response.status = 201
-                log.debug("ok, should be raising exception {}".format(upserted_val))
-                raise NewValidatorList(upserted_val)
             else:
                 response.status = 200 
         finally:

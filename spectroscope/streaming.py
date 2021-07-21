@@ -6,7 +6,8 @@ from typing import List
 from spectroscope.clients.beacon_client import BeaconChainStreamer
 from spectroscope.clients.validator_client import ValidatorClientStreamer
 from spectroscope.service.spectroscope_server import SpectroscopeServer
-from spectroscope.exceptions import AddKeys, ValidatorActivated, DelKeys, NoKeys
+from spectroscope.exceptions import Interrupt, ValidatorActivated
+from spectroscope.model.queue import AddKeys, DelKeys, ActivatedKeys, Publish
 
 log = spectroscope.log()
 
@@ -32,41 +33,55 @@ class StreamingClient:
         self.unactive_validators = unactive_validators
         if active_validators is None:
             self.active_validators = []
+        self.queue = asyncio.Queue()
 
 
-    
     def setup(self):
         self.validatorstream.add_validators(set(map(bytes.fromhex, self.unactive_validators)))
         self.beaconstream.add_validators(set(map(bytes.fromhex, self.active_validators)))
+        self.mongostream.setup(self.queue)
     
     async def loop(self):
-        db_queue = asyncio.Queue()
         while True:
-            tasks = [asyncio.create_task(i.stream()) for i in [self.validatorstream,self.beaconstream] if i.count_validators()]
-            tasks.append(asyncio.create_task(self.rpcserver.serve()))
-            tasks.append(asyncio.create_task(self.mongostream.run(db_queue)))
-            log.debug("task list checks part 1: before tasks{}".format(len(tasks)))
-            results = await asyncio.gather(*tasks, return_exceptions=True)
-            log.debug("checks part 2: after results {}".format(len(results)))
-            for result in results:
-                log.error(f"Handling error: {result}")
-                if isinstance(result, ValidatorActivated):
-                    self._update_keys(result)
-                    self._prompt_log("{} activated keys".format(len(result.get_keys())))
-                elif isinstance(result, AddKeys):
-                    self._add_keys(result)
-                    self._prompt_log("Added {} keys".format(len(result.get_keys())))
-                elif isinstance(result, DelKeys):
-                    self._delete_keys(result)
-                    self._prompt_log("Deleted {} keys".format(len(result.get_keys())))
-                # elif isinstance(result, NoKeys):
-                #     tasks.append(asyncio.create_task(self.mongostream.run(db_queue)))
-                #     continue
-                elif isinstance(result, Exception):
-                    log.error(f"Handling general error: {result}")
-                elif isinstance(result, type(None)):
-                    continue
+            #tasks = [asyncio.create_task(i.stream()), name=i.name() for i in [self.validatorstream,self.beaconstream] if i.count_validators()]
+            tasks = []
+            if self.validatorstream.count_validators():
+                tasks.append(asyncio.create_task(self.validatorstream.stream(), name='validator_stream'))
+            if self.beaconstream.count_validators():
+                tasks.append(asyncio.create_task(self.beaconstream.stream(), name='beacon_stream'))
+            tasks.append(asyncio.create_task(self.rpcserver.serve(), name="rpc_server"))
+            tasks.append(asyncio.create_task(self.mongostream.run(), name="mongo_client"))
+            tasks.append(asyncio.create_task(self.event_consumer(self.queue), name="events_consumer"))
+            log.debug("running tasks: {}".format([task.get_name() for task in tasks]))
+            try:
+                await asyncio.gather(*tasks, return_exceptions=False)
+            except ValidatorActivated as activated:
+                self._update_keys(activated)
+            except Exception as inter:
+                log.warn(f"got interrupted by: {type(inter)}")
+                log.warn(f"details of error: {inter}")
+            finally:
+                await asyncio.sleep(1)
                 await self.shutdown(tasks)
+
+
+    async def event_consumer(self,queue):
+        #while True:
+        message = await queue.get()
+        if isinstance(message, type(None)):
+            log.debug("something went wrong, received None message")
+        elif isinstance(message, ValidatorActivated):
+            self._update_keys(message)
+            self._prompt_log("{} activated keys".format(len(message.get_keys())))
+        elif isinstance(message, AddKeys):
+            self._add_keys(message)
+            self._prompt_log("Added {} keys".format(len(message.get_keys())))
+        elif isinstance(message, DelKeys):
+            self._delete_keys(message)
+            self._prompt_log("Deleted {} keys".format(len(message.get_keys())))
+        else:
+            log.debug(f"Unrecognized message type received: {type(message)}")
+        await asyncio.sleep(2)
 
 #TODO create the graceful shutdown into restart to remove the runtime error for coroutines not awaited
     async def shutdown(self,tasks):
@@ -83,17 +98,17 @@ class StreamingClient:
         self.validatorstream.add_validators(self._retrieve_keys)
 
     def _update_keys(self,result):
-        log.debug("updating the list with those keys: {}".format(result.get_keys()))
+        log.debug("updating the list with those keys: {}".format([x.hex() for x in result.get_keys()]))
         self.validatorstream.remove_validators(result.get_keys())
         self.beaconstream.add_validators(result.get_keys())
 
     def _delete_keys(self, result):
-        log.debug("deleting those keys: {}".format(result.get_keys()))
+        log.debug("deleting those keys: {}".format([x.hex() for x in result.get_keys()]))
         self.validatorstream.remove_validators(result.get_keys())
         self.beaconstream.remove_validators(result.get_keys())
 
     def _add_keys(self, result):
-        log.debug("adding those keys: {}".format(result.get_keys()))
+        log.debug("adding those keys: {}".format([x.hex() for x in result.get_keys()]))
         self.validatorstream.add_validators(result.get_keys())
 
     def _prompt_log(self,message):

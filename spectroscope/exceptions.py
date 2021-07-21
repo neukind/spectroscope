@@ -19,21 +19,3 @@ class ValidatorActivated(Interrupt):
         self.activated_keys: list() = activated_keys
     def get_keys(self):
         return self.activated_keys
-
-class NewValidatorList(Interrupt):
-    def __init__(self,val_keys):
-        self.val_keys: List[str] = val_keys
-    def get_keys(self):
-        return self.val_keys
-
-class AddKeys(NewValidatorList):
-    pass
-
-class DelKeys(NewValidatorList):
-    pass
-
-class AddDelKeys(NewValidatorList):
-    pass
-
-class NoKeys(NewValidatorList):
-    pass

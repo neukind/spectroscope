@@ -31,5 +31,8 @@ setuptools.setup(
             "webhook = spectroscope.module.webhook:Webhook",
             "zenduty = spectroscope.module.zenduty:Zenduty",
         ],
+        "spectroscope.client": [
+
+        ]
     },
 )
