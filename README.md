@@ -36,7 +36,11 @@ git submodules update --init
 ./build_proto_lib.sh
 
 # you can pull in dependencies for extra modules as necessary
+<<<<<<< HEAD
 pip install .[alerta,webhook,zenduty,mongodb]
+=======
+pip install .[alerta,webhook,zenduty] (zsh: pip install .\[alerta,webhook,zenduty\])
+>>>>>>> main
 spectroscope init  # installs a fresh config to config.toml
 vim config.toml    # modify your config as necessary
 spectroscope --config config.toml
