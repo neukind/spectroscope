@@ -2,6 +2,7 @@ from motor import motor_asyncio
 import pymongo
 import asyncio
 import spectroscope
+from pymongo import UpdateOne
 from spectroscope.module import Module, Plugin, Subscriber
 from spectroscope.model.queue import AddKeys, DelKeys, ValKeys
 
@@ -22,6 +23,7 @@ class MongodbClientStreamer:
         db_name:str,
         col_name:str,
     ):
+        self.pymongo = pymongo.MongoClient(db_uri)[db_name][col_name]
         self.collection = motor_asyncio.AsyncIOMotorClient(db_uri)[db_name][col_name]
         self.queue:asyncio.Queue = None
         self.subscribers = list()
@@ -34,9 +36,11 @@ class MongodbClientStreamer:
             else:
                 raise TypeError
 
-    def setup(self,queue):
+    def setup(self,queue, validators):
         self.queue = queue
-
+        self.pymongo.bulk_write(
+            [UpdateOne({"_id":key},{"$setOnInsert":{"_id":key,"status":0}},upsert=True,) for key in validators]
+        )
 
     async def run(self):
         insert_vals = []

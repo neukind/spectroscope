@@ -16,6 +16,7 @@ class StreamingClient:
     Args:
         validatorstream: stream validator info until its activation: activation epoch, its queue, and its status
         beaconstream: stream validator info per epoch: balances, and its status 
+        mongostream: stream mongodb changes: Inserts and Deletes 
         rpcserver: serves users for validator list management: AddNodes, UpNodes and DelNodes available
     """
     def __init__(self,
@@ -23,8 +24,8 @@ class StreamingClient:
         beaconstream: BeaconChainStreamer,
         mongostream: MongodbClientStreamer,
         rpcserver: SpectroscopeServer,
-        unactive_validators: List[bytes],
-        active_validators: List[bytes]=None,
+        unactive_validators: List[str],
+        active_validators: List[str]=None,
     ):
         self.validatorstream = validatorstream
         self.beaconstream = beaconstream
@@ -39,7 +40,7 @@ class StreamingClient:
     def setup(self):
         self.validatorstream.add_validators(set(map(bytes.fromhex, self.unactive_validators)))
         self.beaconstream.add_validators(set(map(bytes.fromhex, self.active_validators)))
-        self.mongostream.setup(self.queue)
+        self.mongostream.setup(self.queue, self.unactive_validators)
     
     async def loop(self):
         while True:
