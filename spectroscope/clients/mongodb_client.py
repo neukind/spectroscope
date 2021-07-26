@@ -47,22 +47,22 @@ class MongodbClientStreamer:
                 change = await stream.try_next()
                 if change is not None:
                     if change['operationType'] == 'insert':
-                        log.debug("this is the whole content: {}".format(change))
                         insert_vals.append(change['documentKey']['_id'])
                     elif change['operationType'] == 'delete':
-                        log.debug("this is the whole content: {}".format(change))
                         delete_vals.append(change['documentKey']['_id'])
                     elif change['operationType'] == 'update': 
                         pass #TODO get fullDocument.status and update validator list of both streams
-                    log.debug("Detected {} new and {} deleting keys".format(len(insert_vals),len(delete_vals)))
-                    continue       
+                    continue                     
                 await self._publish(insert_vals,delete_vals)
                 await asyncio.sleep(3)
 
     async def _publish(self, insert_vals, delete_vals):
         if insert_vals:
+            log.debug("Detected {} new keys".format(len(insert_vals)))
             asyncio.create_task(self.queue.put_nowait(AddKeys(validator_keys=set(map(bytes.fromhex,insert_vals)))))
             if delete_vals:
+                log.debug("Detected {} new and {} deleting keys".format(len(insert_vals),len(delete_vals)))
                 asyncio.create_task(self.queue.put_nowait(DelKeys(validator_keys=set(map(bytes.fromhex,delete_vals)))))
         if delete_vals:
+            log.debug("Detected {} deleting keys".format(len(delete_vals)))
             asyncio.create_task(self.queue.put_nowait(DelKeys(validator_keys=set(map(bytes.fromhex,delete_vals)))))

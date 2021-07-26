@@ -90,7 +90,6 @@ class Mongodb(Plugin):
         result = self._collection.bulk_write(self._create_updates(validator_keys,status), ordered=False)
         if not result.acknowledged:
             return []
-        log.debug("Upserted values :{}".format(result.upserted_ids))
         return result.upserted_count
 
     def _up(self, validator_keys: List[str], status: int):
@@ -111,7 +110,6 @@ class Mongodb(Plugin):
             validators = self._collection.find({},{"validator_key":1})
         else:
             validators = self._collection.find({'validator_key':{'$in':validator_keys}},{"validator_key":1})
-        log.debug("docs updated : {}".format(len([x['validator_key'] for x in validators])))
         return [x['validator_key'] for x in validators]
 
     def _action(self,validator_keys: List[str], status: int, update_type:int, **kwargs):
@@ -126,8 +124,6 @@ class Mongodb(Plugin):
 
     def consume(self,events: List[Action]):
         result = []
-        log.debug("arrived here...")
         for event in events:
             result.append(self._handlers[type(event)](**event.update.get_dict()))
-        log.debug("this is the result of the request :{}".format(result))
         return result

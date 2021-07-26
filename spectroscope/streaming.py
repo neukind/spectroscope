@@ -43,7 +43,7 @@ class StreamingClient:
     
     async def loop(self):
         while True:
-            #tasks = [asyncio.create_task(i.stream()), name=i.name() for i in [self.validatorstream,self.beaconstream] if i.count_validators()]
+            log.debug("async spectroscope starting..")
             tasks = []
             if self.validatorstream.count_validators():
                 tasks.append(asyncio.create_task(self.validatorstream.stream(), name='validator_stream'))
@@ -75,20 +75,17 @@ class StreamingClient:
             log.debug("something went wrong, received None message")
         elif isinstance(message, ValidatorActivated):
             self._update_keys(message)
-            self._prompt_log("{} activated keys".format(len(message.get_keys())))
         elif isinstance(message, AddKeys):
             self._add_keys(message)
-            self._prompt_log("Added {} keys".format(len(message.get_keys())))
         elif isinstance(message, DelKeys):
             self._delete_keys(message)
-            self._prompt_log("Deleted {} keys".format(len(message.get_keys())))
         else:
             log.debug(f"Unrecognized message type received: {type(message)}")
         #await asyncio.sleep(2)
 
 #TODO create the graceful shutdown into restart to remove the runtime error for coroutines not awaited
     async def shutdown(self,tasks):
-        log.info("Ending spectroscope, bye bye..")
+        log.debug("shutting down async spectroscope.. Bye bye")
         for t in tasks:
             t.cancel()
     
@@ -101,20 +98,15 @@ class StreamingClient:
         self.validatorstream.add_validators(self._retrieve_keys)
 
     def _update_keys(self,result):
-        log.debug("updating the list with those keys: {}".format([x.hex() for x in result.get_keys()]))
+        log.debug("updating activated keys: {}".format([x.hex() for x in result.get_keys()]))
         self.validatorstream.remove_validators(result.get_keys())
         self.beaconstream.add_validators(result.get_keys())
 
     def _delete_keys(self, result):
-        log.debug("deleting those keys: {}".format([x.hex() for x in result.get_keys()]))
-        try:
-            self.validatorstream.remove_validators(result.get_keys())
-            self.beaconstream.remove_validators(result.get_keys())
-        except KeyError as unknown_key:
-            log.debug("the key {} not found".format(unknown_key))
+        log.debug("deleting keys: {}".format([x.hex() for x in result.get_keys()]))
+        self.validatorstream.remove_validators(result.get_keys())
+        self.beaconstream.remove_validators(result.get_keys())
+    
     def _add_keys(self, result):
         log.debug("adding those keys: {}".format([x.hex() for x in result.get_keys()]))
         self.validatorstream.add_validators(result.get_keys())
-
-    def _prompt_log(self,message):
-        log.info("monitoring list modified: {}".format(message))

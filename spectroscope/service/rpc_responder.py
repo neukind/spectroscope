@@ -67,7 +67,6 @@ class RPCValidatorServicer(service_pb2_grpc.ValidatorServiceServicer):
 
 
     def _send_requests(self, updates):
-        log.debug('received these updates {}'.format(updates))
         responses = list()
         for subscriber in self.subscribers:
             batch = DatabaseBatch(
