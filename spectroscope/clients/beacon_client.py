@@ -55,10 +55,10 @@ class BeaconChainStreamer:
             except KeyError as unknown_key:
                 log.warn("Warning! Failed to delete a key !")
                 log.warn("the key {} not found in beacon stream".format(unknown_key))
-            
+
     def update_validators(self, validators: Set[bytes]):
         self.validator_set = validators
-        
+
     def _generate_messages(self):
         log.info("Watching for {} validators".format(len(self.validator_set)))
         yield beacon_chain_pb2.ValidatorChangeSet(
@@ -67,9 +67,7 @@ class BeaconChainStreamer:
         )
 
     def stream_responses(self, validator_info):
-        log.debug(
-            "Received update for validator idx {}".format(validator_info.index)
-        )
+        log.debug("Received update for validator idx {}".format(validator_info.index))
         updates = [
             ValidatorStatusUpdate(status=validator_info.status),
             ValidatorBalanceUpdate(
@@ -93,10 +91,14 @@ class BeaconChainStreamer:
                 responses.extend(subscriber.consume(batch))
 
         for plugin in self.plugins:
-            actions = list(filter(lambda x: type(x) in plugin.consumed_types, responses))
+            actions = list(
+                filter(lambda x: type(x) in plugin.consumed_types, responses)
+            )
             if actions:
                 plugin.consume(actions)
 
     async def stream(self):
-        async for stream_value in self.stub.StreamValidatorsInfo(self._generate_messages()).__aiter__():
+        async for stream_value in self.stub.StreamValidatorsInfo(
+            self._generate_messages()
+        ).__aiter__():
             self.stream_responses(stream_value)

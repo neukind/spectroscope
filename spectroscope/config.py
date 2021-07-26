@@ -19,7 +19,7 @@ SYSTEM_MODULE_CONFIG = {
             default=[],
         ),
     ],
-    "database":[
+    "database": [
         ConfigOption(
             name="database_uri",
             param_type=str,
@@ -38,7 +38,7 @@ SYSTEM_MODULE_CONFIG = {
             description="The collection name of the mongodb",
             default="validators",
         ),
-    ]
+    ],
 }
 
 

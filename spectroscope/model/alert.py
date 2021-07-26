@@ -16,7 +16,7 @@ class Alert(BaseModel):
         vals["idx"] = self.validator.idx
         vals["value"] = self.get_value()
         return vals
-    
+
     def get_str_dict(self):
         vals = dict()
         vals["event"] = self.alert_type

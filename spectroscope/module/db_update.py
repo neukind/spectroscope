@@ -8,8 +8,9 @@ from spectroscope.constants import enums
 class UpdateKey(Database):
     pass
 
+
 class DbUpdate(Subscriber):
-    def __init__(self,db_type):
+    def __init__(self, db_type):
         self.db_type = db_type
 
     _consumed_types = [DatabaseUpdate]
@@ -26,13 +27,11 @@ class DbUpdate(Subscriber):
         for update in batch.updates:
             ret.append(
                 RaiseUpdateKeys(
-                    update = UpdateKey(
-                        validator_keys = update.validator_keys,
-                        status = update.status,
-                        update_type = update.update_type
+                    update=UpdateKey(
+                        validator_keys=update.validator_keys,
+                        status=update.status,
+                        update_type=update.update_type,
                     ),
                 )
             )
         return ret
-
-            

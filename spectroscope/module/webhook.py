@@ -25,4 +25,6 @@ class Webhook(Plugin):
 
     def consume(self, events: List[Action]):
         for event in events:
-            requests.post(self._uri_endpoint, json=json.dumps(event.notification.get_str_dict()))  
+            requests.post(
+                self._uri_endpoint, json=json.dumps(event.notification.get_str_dict())
+            )

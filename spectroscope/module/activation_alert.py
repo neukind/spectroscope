@@ -6,6 +6,7 @@ from spectroscope.module import Subscriber
 from typing import Dict, List
 from ethereumapis.v1alpha1.validator_pb2 import _VALIDATORSTATUS
 
+
 class DepositStatusChange(Alert, Notification):
     alert_type: str = "DepositStatusChange"
     previousStatus: int
@@ -18,16 +19,16 @@ class DepositStatusChange(Alert, Notification):
 class ActivationAlert(Subscriber):
     _consumed_types = [ValidatorActivationUpdate]
 
-    def __init__(self,notify_when_enter: List[int],alert_when_exit: List[int]):
-        self._statuses: Dict[bytes,int] = dict()
+    def __init__(self, notify_when_enter: List[int], alert_when_exit: List[int]):
+        self._statuses: Dict[bytes, int] = dict()
         self._notify_when_enter = notify_when_enter
         self._alert_when_exit = alert_when_exit
-    
+
     @classmethod
     def register(cls, **kwargs):
         return cls(
-            notify_when_enter=kwargs.get("notify_when_enter",[1]),
-            alert_when_exit=kwargs.get("alert_when_exit",[2,3])
+            notify_when_enter=kwargs.get("notify_when_enter", [1]),
+            alert_when_exit=kwargs.get("alert_when_exit", [2, 3]),
         )
 
     def consume(self, batch: ActivationBatch) -> List[Action]:
@@ -54,6 +55,7 @@ class ActivationAlert(Subscriber):
                     self._statuses[pk] = update.status
         return ret
 
-# the current issue is that the WaitForActivation stream will go from DEPOSITED to ACTIVE directly, without going to Pending. 
-# seems like the current ethereumapis api will provide the status from the pending status only. 
+
+# the current issue is that the WaitForActivation stream will go from DEPOSITED to ACTIVE directly, without going to Pending.
+# seems like the current ethereumapis api will provide the status from the pending status only.
 # During the actual DEPOSITED state of the validator, the stream will be returning a blank status, labelled "UNKNOWN_STATUS".

@@ -5,15 +5,17 @@ from spectroscope.model.update import (
     ValidatorActivationUpdate,
     ActivationBatch,
 )
-from spectroscope.exceptions import Invalid,ValidatorInvalid,ValidatorActivated
+from spectroscope.exceptions import Invalid, ValidatorInvalid, ValidatorActivated
 from spectroscope.module import Module, Plugin, Subscriber
 from typing import List, Set, Tuple, Type
 import asyncio
 
 log = spectroscope.log()
 
-#CONSTANTS
+# CONSTANTS
 UINT64_MAX = 18446744073709551615
+
+
 class ValidatorClientStreamer:
     """Stream WaitForActivation messages from the beacon node validator gRPC endpoint.
 
@@ -39,7 +41,6 @@ class ValidatorClientStreamer:
                 self.plugins.append(module.register(**config))
             else:
                 raise TypeError
-
 
     def count_validators(self):
         return len(self.validator_set)
@@ -69,7 +70,7 @@ class ValidatorClientStreamer:
     def stream_responses(self, stream):
         av: List[bytes] = list()
         for validator_info in stream.statuses:
-            if (validator_info.index == UINT64_MAX):
+            if validator_info.index == UINT64_MAX:
                 continue
             if validator_info.status.activation_epoch < self.closest_activation:
                 self.closest_activation = validator_info.status.activation_epoch
@@ -80,7 +81,8 @@ class ValidatorClientStreamer:
             for subscriber in self.subscribers:
                 batch = ActivationBatch(
                     validator=ValidatorIdentity(
-                        pubkey=validator_info.public_key, idx=validator_info.index, 
+                        pubkey=validator_info.public_key,
+                        idx=validator_info.index,
                     ),
                     activation_epoch=validator_info.status.activation_epoch,
                     updates=list(
@@ -89,24 +91,36 @@ class ValidatorClientStreamer:
                 )
                 if batch.updates:
                     responses.extend((subscriber.consume(batch)))
-            
+
             for plugin in self.plugins:
-                actions = list(filter(lambda x: type(x) in plugin.consumed_types, responses))
+                actions = list(
+                    filter(lambda x: type(x) in plugin.consumed_types, responses)
+                )
                 if actions:
                     plugin.consume(actions)
-            
-            if validator_info.status.status == validator_pb2._VALIDATORSTATUS.values_by_name["ACTIVE"].number:
+
+            if (
+                validator_info.status.status
+                == validator_pb2._VALIDATORSTATUS.values_by_name["ACTIVE"].number
+            ):
                 av.append(validator_info.public_key)
                 continue
         return av
 
     async def stream(self):
-        async for activation_response in self.stub.WaitForActivation(self._generate_messages()).__aiter__():
+        async for activation_response in self.stub.WaitForActivation(
+            self._generate_messages()
+        ).__aiter__():
             self.stream_responses(activation_response)
 
         activated_validators = list()
         for validator_info in activation_response.statuses:
-            if validator_pb2._VALIDATORSTATUS.values_by_number[validator_info.status.status].name == "ACTIVE":
+            if (
+                validator_pb2._VALIDATORSTATUS.values_by_number[
+                    validator_info.status.status
+                ].name
+                == "ACTIVE"
+            ):
                 activated_validators.append(validator_info.public_key)
         log.debug("retrieved {} activated pks".format(len(activated_validators)))
         raise ValidatorActivated(activated_validators)
