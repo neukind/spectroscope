@@ -60,6 +60,9 @@ class StreamingClient:
             except Exception as inter:
                 log.warn(f"got interrupted by: {type(inter)}")
                 log.warn(f"details of error: {inter}")
+            except KeyError as internal_error:
+                log.error("something went wrong here: ")
+                log.error(f"KeyError: {internal_error}")
             finally:
                 await asyncio.sleep(1)
                 await self.shutdown(tasks)
@@ -81,7 +84,7 @@ class StreamingClient:
             self._prompt_log("Deleted {} keys".format(len(message.get_keys())))
         else:
             log.debug(f"Unrecognized message type received: {type(message)}")
-        await asyncio.sleep(2)
+        #await asyncio.sleep(2)
 
 #TODO create the graceful shutdown into restart to remove the runtime error for coroutines not awaited
     async def shutdown(self,tasks):
@@ -104,9 +107,11 @@ class StreamingClient:
 
     def _delete_keys(self, result):
         log.debug("deleting those keys: {}".format([x.hex() for x in result.get_keys()]))
-        self.validatorstream.remove_validators(result.get_keys())
-        self.beaconstream.remove_validators(result.get_keys())
-
+        try:
+            self.validatorstream.remove_validators(result.get_keys())
+            self.beaconstream.remove_validators(result.get_keys())
+        except KeyError as unknown_key:
+            log.debug("the key {} not found".format(unknown_key))
     def _add_keys(self, result):
         log.debug("adding those keys: {}".format([x.hex() for x in result.get_keys()]))
         self.validatorstream.add_validators(result.get_keys())

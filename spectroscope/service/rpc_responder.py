@@ -85,17 +85,27 @@ class RPCValidatorServicer(service_pb2_grpc.ValidatorServiceServicer):
                 api_results = plugin.consume(actions)
         return api_results
 
+
+    # def _return_api(self, result_api):
+    #     response = service_pb2.RequestsResult()
+    #     for result in result_api:
+    #         if result['modified_count']> 0:
+    #             pass
+    #             #do something in particular, not implemented yet 
+    #         elif result['inserted_count']:
+
+
     def _return_api(self, result_api):
         response = service_pb2.RequestsResult()
-        upserted_val = 0
+        modified_val = 0
         try:
-            upserted_val = [upserted_val + x for result in result_api for x in result][0]
-            if upserted_val:
+            modified_val = [modified_val + x for x in result_api][0]
+            if modified_val:
                 response.status = 201
             else:
                 response.status = 200 
         finally:
-            response.count = upserted_val
+            response.count = modified_val
             return response 
 
     def _return_get(self,result_api):

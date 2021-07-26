@@ -24,7 +24,7 @@ from typing import List
 from spectroscope.exceptions import Invalid,ValidatorInvalid,ValidatorActivated
 from functools import wraps
 # System modules should be considered separate; they are for configuration purposes only.
-SYSTEM_MODULES: List[str] = ["spectroscope"]
+SYSTEM_MODULES: List[str] = ["spectroscope","database"]
 
 DEFAULT_CONFIG_PATH: str = "config.toml"
 
@@ -87,6 +87,11 @@ async def run(config_file: click.utils.LazyFile, server_host: click.STRING, serv
         scope_config = config_root.get("spectroscope", dict())
         grpc_endpoint = scope_config["eth2_endpoint"]
         validator_set = set(scope_config["pubkeys"])
+        database_config = config_root.get("database",dict())
+        db_uri = database_config["database_uri"]
+        db_name = database_config["database_name"]
+        db_col = database_config["database_collection"]
+
     except KeyError as e:
         raise click.ClickException(
             "{} expected but not found in config file. Exiting.".format(e)
@@ -113,7 +118,7 @@ async def run(config_file: click.utils.LazyFile, server_host: click.STRING, serv
         beacon_stub = beacon_chain_pb2_grpc.BeaconChainStub(channel)
         val_streamer = ValidatorClientStreamer(validator_stub, [x for x in modules])
         beacon_streamer = BeaconChainStreamer(beacon_stub, [x for x in modules])
-        mongo_streamer = MongodbClientStreamer(modules=modules)
+        mongo_streamer = MongodbClientStreamer(db_uri=db_uri, db_name=db_name, col_name=db_col, modules=modules)
         spectro_server = SpectroscopeServer(server_host,server_port,[x for x in modules])
         streamer = StreamingClient(val_streamer,beacon_streamer,mongo_streamer,spectro_server,validator_set)
         streamer.setup()

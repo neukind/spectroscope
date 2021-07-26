@@ -18,6 +18,26 @@ SYSTEM_MODULE_CONFIG = {
             description="List of hex-encoded public keys to watch",
             default=[],
         ),
+    ],
+    "database":[
+        ConfigOption(
+            name="database_uri",
+            param_type=str,
+            description="Uri of the mongodb database",
+            default="mongodb://localhost:27017",
+        ),
+        ConfigOption(
+            name="database_name",
+            param_type=str,
+            description="The database name of the mongodb",
+            default="spectroscope",
+        ),
+        ConfigOption(
+            name="database_collection",
+            param_type=str,
+            description="The collection name of the mongodb",
+            default="validators",
+        ),
     ]
 }
 

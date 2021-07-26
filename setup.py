@@ -30,9 +30,6 @@ setuptools.setup(
             "status_alert = spectroscope.module.status_alert:StatusAlert",
             "webhook = spectroscope.module.webhook:Webhook",
             "zenduty = spectroscope.module.zenduty:Zenduty",
-        ],
-        "spectroscope.client": [
-
         ]
     },
 )
