@@ -2,10 +2,10 @@
 
 - Spectroscope Server: 
     GRPC Server listening to client requests regarding the list of validators spectroscope should be monitoring.  
-    Currently supports: 
-        -  AddNodes:  Adds a list of validators to the watching list 
-        -  DelNodes:  Deletes a list of validators from the watching list 
-        -  UpdateNodes:  Updates a list of validators ( their status for instance) 
+    Currently supports:  
+        -  AddNodes:  Adds a list of validators to the watching list  
+        -  DelNodes:  Deletes a list of validators from the watching list  
+        -  UpdateNodes:  Updates a list of validators ( their status for instance)  
     All these requests wil modify the database, therefore the mongodb plugin is mandatory when this server is present.  
 
 - Beacon streamer: 
