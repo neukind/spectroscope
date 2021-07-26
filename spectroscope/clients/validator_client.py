@@ -46,11 +46,16 @@ class ValidatorClientStreamer:
 
     def add_validators(self, validators: Set[bytes]):
         for validator in validators:
-            self.validator_set.add(validator)
+            if validator not in self.validator_set:
+                self.validator_set.add(validator)
 
     def remove_validators(self, validators: Set[bytes]):
-        for validator in validators: 
-            self.validator_set.remove(validator)
+        for validator in validators:
+            try:
+                self.validator_set.remove(validator)
+            except KeyError as unknown_key:
+                log.warn("Warning! Failed to delete a key !")
+                log.warn("the key {} not found in validator stream".format(unknown_key))
 
     def update_validators(self, validators: Set[bytes]):
         self.validator_set = validators

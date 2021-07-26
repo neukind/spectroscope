@@ -50,8 +50,12 @@ class BeaconChainStreamer:
 
     def remove_validators(self, validators: Set[bytes]):
         for validator in validators:
-            self.validator_set.remove(validator)
-
+            try:
+                self.validator_set.remove(validator)
+            except KeyError as unknown_key:
+                log.warn("Warning! Failed to delete a key !")
+                log.warn("the key {} not found in beacon stream".format(unknown_key))
+            
     def update_validators(self, validators: Set[bytes]):
         self.validator_set = validators
         

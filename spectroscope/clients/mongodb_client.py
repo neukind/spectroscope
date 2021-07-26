@@ -18,9 +18,9 @@ class MongodbClientStreamer:
     def __init__(
         self,
         modules: List[Tuple[Type[Module], dict]],
-        db_uri:str="mongodb://localhost:27017",
-        db_name:str="spectroscope",
-        col_name:str="validators",
+        db_uri:str,
+        db_name:str,
+        col_name:str,
     ):
         self.collection = motor_asyncio.AsyncIOMotorClient(db_uri)[db_name][col_name]
         self.queue:asyncio.Queue = None
@@ -36,7 +36,7 @@ class MongodbClientStreamer:
 
     def setup(self,queue):
         self.queue = queue
- 
+
 
     async def run(self):
         insert_vals = []
@@ -47,14 +47,17 @@ class MongodbClientStreamer:
                 change = await stream.try_next()
                 if change is not None:
                     if change['operationType'] == 'insert':
-                        insert_vals.append(change['fullDocument']['validator_key'])
+                        log.debug("this is the whole content: {}".format(change))
+                        insert_vals.append(change['documentKey']['_id'])
                     elif change['operationType'] == 'delete':
-                        delete_vals.append(change['fullDocument']['validator_key'])
+                        log.debug("this is the whole content: {}".format(change))
+                        delete_vals.append(change['documentKey']['_id'])
+                    elif change['operationType'] == 'update': 
+                        pass #TODO get fullDocument.status and update validator list of both streams
                     log.debug("Detected {} new and {} deleting keys".format(len(insert_vals),len(delete_vals)))
                     continue       
                 await self._publish(insert_vals,delete_vals)
-                await asyncio.sleep(10)
-
+                await asyncio.sleep(3)
 
     async def _publish(self, insert_vals, delete_vals):
         if insert_vals:
