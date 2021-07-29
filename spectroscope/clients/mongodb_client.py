@@ -50,7 +50,19 @@ class MongodbClientStreamer:
                 for key in validators
             ]
         )
+        return self._get_keys()
 
+    def _get_keys(self):
+        active_validators = []
+        unactive_validators = []
+        validator_set = self.pymongo.find({})
+        for validator in validator_set:
+            if validator['status'] ==3:
+                active_validators.append(validator['_id'])
+            else:
+                unactive_validators.append(validator['_id'])
+        return unactive_validators, active_validators
+    
     async def run(self):
         insert_vals = []
         delete_vals = []

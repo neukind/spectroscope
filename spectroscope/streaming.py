@@ -28,25 +28,22 @@ class StreamingClient:
         mongostream: MongodbClientStreamer,
         rpcserver: SpectroscopeServer,
         unactive_validators: List[str],
-        active_validators: List[str] = None,
     ):
         self.validatorstream = validatorstream
         self.beaconstream = beaconstream
         self.mongostream = mongostream
         self.rpcserver = rpcserver
         self.unactive_validators = unactive_validators
-        if active_validators is None:
-            self.active_validators = []
         self.queue = asyncio.Queue()
 
     def setup(self):
+        unactive_val,active_validators = self.mongostream.setup(self.queue, self.unactive_validators)
         self.validatorstream.add_validators(
-            set(map(bytes.fromhex, self.unactive_validators))
+            set(map(bytes.fromhex, unactive_val))
         )
         self.beaconstream.add_validators(
-            set(map(bytes.fromhex, self.active_validators))
+            set(map(bytes.fromhex, active_validators))
         )
-        self.mongostream.setup(self.queue, self.unactive_validators)
 
     async def loop(self):
         while True:
@@ -119,17 +116,12 @@ class StreamingClient:
         self.validatorstream.add_validators(self._retrieve_keys)
 
     def _update_keys(self, result):
-        log.debug(
-            "updating activated keys: {}".format([x.hex() for x in result.get_keys()])
-        )
         self.validatorstream.remove_validators(result.get_keys())
         self.beaconstream.add_validators(result.get_keys())
 
     def _delete_keys(self, result):
-        log.debug("deleting keys: {}".format([x.hex() for x in result.get_keys()]))
         self.validatorstream.remove_validators(result.get_keys())
         self.beaconstream.remove_validators(result.get_keys())
 
     def _add_keys(self, result):
-        log.debug("adding those keys: {}".format([x.hex() for x in result.get_keys()]))
         self.validatorstream.add_validators(result.get_keys())
