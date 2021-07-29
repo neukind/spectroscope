@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-import "proto_files/validator/node.proto";
+import "node.proto";
 
 service ValidatorService{
     rpc AddNodes(AddNodesRequest) returns(RequestsResult);
