@@ -2,7 +2,7 @@ import unittest
 from unittest.mock import Mock, call
 
 from ethereumapis.v1alpha1 import beacon_chain_pb2, validator_pb2
-from spectroscope.beacon_client import BeaconChainStreamer
+from spectroscope.clients.beacon_client import BeaconChainStreamer
 from spectroscope.model import ChainTimestamp, Event, ValidatorIdentity
 from spectroscope.model.update import (
     ValidatorBalanceUpdate,

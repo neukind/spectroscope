@@ -31,8 +31,12 @@ cd spectroscope
 python3 -m venv venv
 source venv/bin/activate
 
+# update the spectroscope-proto
+git submodules update --init 
+./build_proto_lib.sh
+
 # you can pull in dependencies for extra modules as necessary
-pip install .[alerta,webhook,zenduty]
+pip install .[alerta,webhook,zenduty] (zsh: pip install .\[alerta,webhook,zenduty\])
 spectroscope init  # installs a fresh config to config.toml
 vim config.toml    # modify your config as necessary
 spectroscope --config config.toml

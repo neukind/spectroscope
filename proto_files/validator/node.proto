@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+message ValidatorList{
+    repeated Validator validator = 1;
+}
+
+message Validator{
+    bytes validator_key = 1;
+}

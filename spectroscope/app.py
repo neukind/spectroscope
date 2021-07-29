@@ -5,22 +5,40 @@ import os
 import sys
 import spectroscope
 import toml
-
+import asyncio
+from motor import motor_asyncio
 from click_default_group import DefaultGroup
 from ethereumapis.v1alpha1 import beacon_chain_pb2_grpc
+from ethereumapis.v1alpha1 import validator_pb2_grpc
 from pkg_resources import load_entry_point
-from spectroscope.beacon_client import BeaconChainStreamer
+from spectroscope.clients.beacon_client import BeaconChainStreamer
+from spectroscope.clients.validator_client import ValidatorClientStreamer
+from spectroscope.service.spectroscope_server import SpectroscopeServer
+from spectroscope.clients.mongodb_client import MongodbClientStreamer
+
 from spectroscope.config import DefaultConfigBuilder
 from spectroscope.module import ConfigOption, ENABLED_BY_DEFAULT
+from spectroscope.module import Plugin, Subscriber
+from spectroscope.streaming import StreamingClient
 from typing import List
+from spectroscope.exceptions import Invalid, ValidatorInvalid, ValidatorActivated
+from functools import wraps
 
 # System modules should be considered separate; they are for configuration purposes only.
-SYSTEM_MODULES: List[str] = ["spectroscope"]
+SYSTEM_MODULES: List[str] = ["spectroscope", "database"]
 
 DEFAULT_CONFIG_PATH: str = "config.toml"
 
 
 log = spectroscope.log()
+
+
+def coro(f):
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        return asyncio.run(f(*args, **kwargs))
+
+    return wrapper
 
 
 @click.group(cls=DefaultGroup, default="run", default_if_no_args=True)
@@ -39,9 +57,26 @@ def cli():
     "config_file",
     type=click.File("r"),
     default=DEFAULT_CONFIG_PATH,
-    help="Config file path",
+    help="Config file path, ([::])",
 )
-def run(config_file: click.utils.LazyFile):
+@click.option(
+    "--host",
+    "server_host",
+    type=click.STRING,
+    default="[::]",
+    help="server host ip (51001)",
+)
+@click.option(
+    "--port",
+    "server_port",
+    type=click.INT,
+    default=50051,
+    help="server port number",
+)
+@coro
+async def run(
+    config_file: click.utils.LazyFile, server_host: click.STRING, server_port: click.INT
+):
     """Run the Spectroscope monitoring agent."""
 
     log.info("Spectroscope starting up")
@@ -53,6 +88,11 @@ def run(config_file: click.utils.LazyFile):
         scope_config = config_root.get("spectroscope", dict())
         grpc_endpoint = scope_config["eth2_endpoint"]
         validator_set = set(scope_config["pubkeys"])
+        database_config = config_root.get("database", dict())
+        db_uri = database_config["database_uri"]
+        db_name = database_config["database_name"]
+        db_col = database_config["database_collection"]
+
     except KeyError as e:
         raise click.ClickException(
             "{} expected but not found in config file. Exiting.".format(e)
@@ -65,19 +105,31 @@ def run(config_file: click.utils.LazyFile):
     for module, config in config_root.items():
         if module not in SYSTEM_MODULES and config.get("enabled", False):
             try:
-                log.info("Loading module {} with {} args".format(module, len(config)))
                 m = load_entry_point("spectroscope", "spectroscope.module", module)
             except ImportError:
                 raise click.ClickException("Couldn't import module {}".format(module))
             modules.append((m, config))
+
     log.info("Loaded {} modules".format(len(modules)))
 
     log.info("Opening gRPC channel")
-    with grpc.insecure_channel(grpc_endpoint) as channel:
-        stub = beacon_chain_pb2_grpc.BeaconChainStub(channel)
-        bw = BeaconChainStreamer(stub, modules)
-        bw.add_validators(set(map(bytes.fromhex, validator_set)))
-        bw.stream()
+
+    async with grpc.aio.insecure_channel(grpc_endpoint) as channel:
+        validator_stub = validator_pb2_grpc.BeaconNodeValidatorStub(channel)
+        beacon_stub = beacon_chain_pb2_grpc.BeaconChainStub(channel)
+        val_streamer = ValidatorClientStreamer(validator_stub, [x for x in modules])
+        beacon_streamer = BeaconChainStreamer(beacon_stub, [x for x in modules])
+        mongo_streamer = MongodbClientStreamer(
+            db_uri=db_uri, db_name=db_name, col_name=db_col, modules=modules
+        )
+        spectro_server = SpectroscopeServer(
+            server_host, server_port, [x for x in modules]
+        )
+        streamer = StreamingClient(
+            val_streamer, beacon_streamer, mongo_streamer, spectro_server, validator_set
+        )
+        streamer.setup()
+        await streamer.loop()
 
 
 @cli.command()
